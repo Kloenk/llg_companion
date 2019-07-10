@@ -6,7 +6,7 @@ use chrono::prelude::*;
 use super::error::Error;
 
 use html5ever::parse_document;
-use html5ever::rcdom::{Handle, NodeData, RcDom};
+use html5ever::rcdom::{Handle, NodeData, RcDom, Node};
 use html5ever::tendril::TendrilSink;
 
 #[doc(inline)]
@@ -305,12 +305,60 @@ impl Config {
             .from_utf8()
             .read_from(&mut html.as_bytes()).unwrap();
         let mut dsb: Vec<DSB> = Vec::new();
-        self.parse_walk(&dom.document, &mut dsb, &Job::NOOP);
+        self.parse_dom(&dom.document).unwrap();
         Ok(())
     }
+    
+    fn parse_dom(&self, handle: &Handle) -> Result<Vec<DSB>> {
+        let mut dsb_return: Vec<DSB> = Vec::new();
+        let node: &Node = handle;
+        let nodeVec = node.children.borrow();
+        let node: &Node = &nodeVec[0];
 
-    /// walk throud dsb html
-    fn parse_walk(&self, handle: &Handle, dsb: &mut Vec<DSB>, job: &Job) {
+        for v in node.children.borrow().iter() {
+            let v: &Node = v;
+            if let NodeData::Element {
+                ref name,
+                ..
+            } = v.data {
+                let name: &html5ever::QualName = name;
+                if name.local.to_string() == "body" {
+                    let mut found_mod_head = false;
+                    for w in v.children.borrow().iter() {
+                        let w: &Node = w;
+                        if let NodeData::Element {
+                                ref name,
+                                ref attrs,
+                                ..
+                            } = w.data {
+                                let name: &html5ever::QualName = name;
+                                let attrs: &Vec<html5ever::Attribute> = &attrs.borrow();
+                                if name.local.to_string() == "table" {
+                                    for attr in attrs.iter() {
+                                        if attr.name.local.to_string() == "class" && attr.value.to_string() == "mon_head" {
+                                            dsb_return.push(DSB::new());
+                                            
+                                            found_mod_head = true;
+                                        }
+                                    }
+                                } else if name.local.to_string() == "center" && found_mod_head {
+                                    if let Some(dsb) = dsb_return.last_mut() {
+                                        let dsb: &mut DSB = dsb;
+                                        eprintln!("not implemented dsb center parse");
+                                    }
+                                    found_mod_head = false;
+                                }
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(dsb_return)
+    }
+
+    // walk throud dsb html
+    /*fn parse_walk(&self, handle: &Handle, dsb: &mut Vec<DSB>, job: &Job) {
         let mut jobNew = job.clone();
         println!("job: {:?}", jobNew);
         let node = handle;
@@ -377,7 +425,7 @@ impl Config {
         } else {
             println!("ended");
         }
-    }
+    }*/
 }
 
 /// enum for previos cell to determ its content
