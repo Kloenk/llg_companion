@@ -1,24 +1,17 @@
-
 #[doc(inline)]
 pub use crate::error::Result;
 
 /// struct holding server config
-pub struct Server {
-
-}
+pub struct Server {}
 
 impl Server {
     /// create new instance
     pub fn new(_conf: &super::Config) -> Self {
-        Self {
-
-        }
+        Self {}
     }
     /// start server
-    pub fn run(&self) -> Result<()>{
-        loop {
-
-        }
+    pub fn run(&self) -> Result<()> {
+        loop {}
         Ok(())
     }
 }
