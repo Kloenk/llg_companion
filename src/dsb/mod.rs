@@ -336,7 +336,7 @@ impl Config {
                                 if name.local.to_string() == "table" {
                                     for attr in attrs.iter() {
                                         if attr.name.local.to_string() == "class" && attr.value.to_string() == "mon_head" {
-                                            dsb_return.push(DSB::new());
+                                            dsb_return.push(DSB::new_mon_head(w));
                                             
                                             found_mod_head = true;
                                         }
@@ -483,6 +483,18 @@ pub struct Class {
 }
 
 pub struct DSB {
+    /// school name
+    pub school: String,
+
+    /// school year
+    pub year: String,
+
+    /// valid from header field
+    pub valid_from: chrono::NaiveDate,
+
+    /// updated at header field
+    pub updated_at: chrono::NaiveDateTime,
+
     /// date of the entry
     pub date: chrono::NaiveDate,
 
@@ -508,6 +520,10 @@ pub struct DSB {
 impl DSB {
     pub fn new() -> Self {
         Self {
+            school: String::new(),
+            year: String::new(),
+            valid_from: NaiveDate::from_ymd(1970, 1, 1),
+            updated_at: NaiveDateTime::from_timestamp(0, 0),
             date: NaiveDate::from_ymd(1970, 1, 1),
             week: Week::A,
             FreeLessons: None,
@@ -516,6 +532,65 @@ impl DSB {
             affected_classes: Vec::new(),
             entries: Vec::new(),
         }
+    }
+
+    /// create new instance from mon_head table dom tree
+    fn new_mon_head(handle: &Node) -> Self {
+        let mut dsb: DSB = DSB::new();
+        let node: &Node = handle;
+        let node: &Node = &node.children.borrow()[1];
+        let node: &Node = &node.children.borrow()[0];
+        let node: &Node = &node.children.borrow()[5];
+        let node: &Node = &node.children.borrow()[1];
+        let schule: &Node = &node.children.borrow()[0];
+        
+        if let NodeData::Text {
+            ref contents
+          } = schule.data {
+              dsb.school = escape_default(&contents.borrow());
+        }
+        drop(schule);
+
+        let year: &Node = &node.children.borrow()[4];
+        if let NodeData::Text {
+            ref contents
+          } = year.data {
+            let year = escape_default(&contents.borrow());
+            let year: Vec<&str> = year.split(" ").collect();
+            if let Some(year) = year.last() {
+                dsb.year = year.to_string();
+            }
+        }
+        drop(year);
+
+        let date: &Node = &node.children.borrow()[6];
+
+        if let NodeData::Text {
+            ref contents
+          } = date.data {
+            let date = escape_default(&contents.borrow());
+            let date = date.trim();
+            let date: Vec<&str> = date.split(" ").collect();
+            if let Some(date) = date.last() {
+                dsb.valid_from = NaiveDate::parse_from_str(date, "%d.%m.%Y").unwrap_or(NaiveDate::from_ymd(1870, 1, 1));
+            }
+        }
+
+        let date: &Node = &node.children.borrow()[8];
+
+        if let NodeData::Text {
+            ref contents
+          } = date.data {
+            let date = escape_default(&contents.borrow());
+            let date = date.trim();
+            let date: Vec<&str> = date.split(" ").collect();
+            if let Some(date) = date.get(date.len()-2..date.len()) {
+                dsb.updated_at = chrono::NaiveDateTime::parse_from_str(&format!("{} {}", date[0], date[1]), "%d.%m.%Y %k:%M").unwrap_or(NaiveDateTime::from_timestamp(0, 0));
+            }
+            
+            
+        }
+        dsb
     }
 
     /// parse mon_title string to DSB info
