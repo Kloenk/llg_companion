@@ -311,18 +311,38 @@ impl Config {
 
     /// walk throud dsb html
     fn parse_walk(&self, handle: &Handle, dsb: &mut Vec<DSB>, job: &Job) {
-        let mut jobNew = Job::NOOP;
+        let mut jobNew = job.clone();
+        println!("job: {:?}", jobNew);
         let node = handle;
         match node.data {
             NodeData::Text { ref contents } => {
-                //println!("text: {}", escape_default(&contents.borrow()));
+                println!("text: {:?}", job);
                 match job {
                     Job::MON_TITLE => {
                         if let Some(dsbEntry) = dsb.last_mut() {
                             dsbEntry.parse_mon_title(&escape_default(&contents.borrow()));
                         }
-                        jobNew = Job::NOOP;
-                    }
+                        //jobNew = Job::NOOP;
+                    },
+                    Job::InfoName => {
+                        let meta = &escape_default(&contents.borrow());
+                        if meta.to_lowercase().contains("unterrichtsfrei") {
+                            jobNew = Job::InfoFreeLessons;
+                            println!("unterrichtsfrei: {:?}", jobNew.clone());
+                        } else {
+                            println!("something else");
+                            jobNew = Job::MON_TITLE;
+                        }
+                    },
+                    Job::InfoFreeLessons => {
+                        let content = escape_default(&contents.borrow());
+                        println!("content: {}", content);
+                        if let Some(dsbEntry) = dsb.last_mut() {
+                            println!("Free Lessons: {}", content);
+                            dsbEntry.FreeLessons = Some(content);
+                        }
+                        //jobNew = Job::NOOP;
+                    },
                     _ => (),
                 }
             },
@@ -331,34 +351,46 @@ impl Config {
                 ref attrs,
                 ..
             } => {
+                println!("element: {:?}", job);
                 if name.local.to_string() == "div" {
-                    let mut isMonTitle = false;
                     for attr in attrs.borrow().iter() {
                         if attr.name.local.to_string() == "class" && attr.value.to_string() == "mon_title" {
-                            isMonTitle = true;
+                            dsb.push(DSB::new());
+                            jobNew = Job::MON_TITLE;
                         }
                     }
-                    if isMonTitle {
-                        dsb.push(DSB::new());
-                        jobNew = Job::MON_TITLE;
+                }
+                if name.local.to_string() == "td" {
+                    for attr in attrs.borrow().iter() {
+                        if attr.name.local.to_string() == "class" && attr.value.to_string() == "info" /*&& job == &Job::NOOP*/ {
+                            println!("found info: {:?}", job);
+                            jobNew = Job::InfoName;
+                        }
                     }
                 }
             },
-            _ => (),
+            _ => println!("other: {:?}", job),
         }
-
-        for child in node.children.borrow().iter() {
-            self.parse_walk(child, dsb, &jobNew);
+        println!("give: {:?}", jobNew);
+        if let Some(handle) = &node.children.borrow().last() {
+            self.parse_walk(handle, dsb, &jobNew);
+        } else {
+            println!("ended");
         }
     }
 }
 
 /// enum for previos cell to determ its content
+#[derive(Debug, PartialEq, Clone)]
 enum Job {
     /// no valid data
     NOOP,
     /// MON_TITLE day time week string
     MON_TITLE,
+    /// info Name for td.info
+    InfoName,
+    /// td.info field Unterrichtsfrei
+    InfoFreeLessons,
 }
 
 /// enum for A and B week
@@ -409,6 +441,9 @@ pub struct DSB {
     /// week type
     pub week: Week,
 
+    /// Free lessons for everyone
+    pub FreeLessons: Option<String>,
+
     /// teachers registerd not there
     pub missing_teachers: Vec<Teacher>,
 
@@ -427,6 +462,7 @@ impl DSB {
         Self {
             date: NaiveDate::from_ymd(1970, 1, 1),
             week: Week::A,
+            FreeLessons: None,
             missing_teachers: Vec::new(),
             blocked_rooms: Vec::new(),
             affected_classes: Vec::new(),
