@@ -49,7 +49,7 @@ fn main() {
                 .long("dsb.password")
                 .help("set dsb password")
                 .takes_value(true)
-                .value_name("PASSWORD")
+                .value_name("PASSWORD"),
         )
         .arg(
             Arg::with_name("planinfo.baseurl")
@@ -57,21 +57,21 @@ fn main() {
                 .help("set planinfo baseurl")
                 .takes_value(true)
                 .hidden(true)
-                .value_name("URL")
+                .value_name("URL"),
         )
         .arg(
             Arg::with_name("planinfo.schoolid")
                 .long("planinfo.schoolid")
                 .help("set schoolid for planinfo")
                 .takes_value(true)
-                .value_name("ID")
+                .value_name("ID"),
         )
         .arg(
             Arg::with_name("planinfo.cookie")
                 .long("planinfo.cookie")
                 .help("set cookies for planinfo")
                 .takes_value(true)
-                .value_name("COOKIE")
+                .value_name("COOKIE"),
         )
         .arg(
             Arg::with_name("impressum")
@@ -79,7 +79,7 @@ fn main() {
                 .short("i")
                 .help("set url of impressum")
                 .takes_value(true)
-                .value_name("URL")
+                .value_name("URL"),
         )
         .arg(
             Arg::with_name("port")
@@ -87,7 +87,7 @@ fn main() {
                 .short("p")
                 .help("set port")
                 .takes_value(true)
-                .value_name("port")
+                .value_name("port"),
         )
         .arg(
             Arg::with_name("address")
@@ -95,7 +95,7 @@ fn main() {
                 .short("I")
                 .help("set interface to listen on")
                 .takes_value(true)
-                .value_name("ADDRESS")
+                .value_name("ADDRESS"),
         )
         .subcommand(
             SubCommand::with_name("completion")
@@ -270,7 +270,7 @@ fn main() {
             }
         }
     }
-    
+
     if let Some(port) = &matches.value_of("port") {
         conf.port = port.parse().unwrap_or(conf.port);
     } else if let Some(config) = &config {
@@ -291,18 +291,14 @@ fn main() {
         }
     }
 
-    
     if conf.verbose >= 1 {
-        println!(
-                "run llgCompanion on {}:{}",
-                conf.address, conf.port
-        );
+        println!("run llgCompanion on {}:{}", conf.address, conf.port);
     }
     if conf.verbose >= 2 {
         println!("Debug{}: enabled", conf.verbose);
     }
 
-    conf.run().unwrap();    // FIXME: unwrap()
+    conf.run().unwrap(); // FIXME: unwrap()
 }
 
 // create completion

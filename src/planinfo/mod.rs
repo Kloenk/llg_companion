@@ -1,4 +1,3 @@
-
 #[doc(inline)]
 pub use super::error::Result;
 
@@ -27,9 +26,7 @@ impl Config {
 
     /// start parsing
     pub fn run(self) -> Result<()> {
-        std::thread::spawn(move || {
-            
-        });
+        std::thread::spawn(move || {});
         Ok(())
     }
 }

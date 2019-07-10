@@ -1,6 +1,6 @@
+use std::error::Error as std_error;
 use std::fmt;
 use std::io;
-use std::error::Error as std_error;
 
 // tests as sub module
 #[cfg(test)] // only add when running tests

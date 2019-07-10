@@ -49,7 +49,6 @@ impl Config {
 
     /// run function of the lib
     pub fn run(&self) -> Result<()> {
-        
         println!("llgCompanion: {}", env!("CARGO_PKG_VERSION"));
 
         self.dsb.run()?;
