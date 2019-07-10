@@ -175,6 +175,7 @@ fn main() {
         }
         a
     };
+    conf.dsb.verbose = conf.verbose;
 
     if let Some(user_id) = &matches.value_of("dsb.userid") {
         conf.dsb.user_id = user_id.to_string();

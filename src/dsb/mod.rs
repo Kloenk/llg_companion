@@ -24,6 +24,8 @@ pub struct Config {
     /// cookie for dsb authentification
     pub cookie: String,
 
+    pub verbose: u8,
+
     /// url for dsb
     /// only use when you use another host for dsb
     /// defaults to `https://www.dsbmobile.de/JsonHandlerWeb.ashx/GetData`
@@ -37,6 +39,7 @@ impl Config {
             user_id: String::new(),
             password: String::new(),
             cookie: String::new(),
+            verbose: 0,
             url: String::from("https://www.dsbmobile.de/JsonHandlerWeb.ashx/GetData"),
         }
     }
@@ -46,7 +49,6 @@ impl Config {
     pub fn run(&self) -> Result<()> {
         let conf = self.clone();
         thread::spawn(move || {
-            println!("start");
             conf.run_int();
         });
         Ok(())
@@ -75,9 +77,7 @@ impl Config {
             .body(data)
             .send()?;
 
-        println!("content: {:?}", dsb);
         let body = dsb.text().unwrap();
-        println!("body: {}", body.clone());
 
         let url = self.decode_dsb_payload(&body).unwrap();
         let mut html = client.get(&url)
@@ -90,7 +90,9 @@ impl Config {
             return Err(Error::new_field_not_exists("not 200 foo".to_string()));
         }
         for (h, v) in html.headers().iter() {
-            println!("header: {}: {:?}", h, v);
+            if self.verbose >= 3 {
+                println!("Debug3: DSB: header: {}: {:?}", h, v);
+            }
         }
 
         let html = html.text().unwrap();
@@ -156,7 +158,9 @@ impl Config {
         e.write_all(&data)?;
         let data = e.finish()?;
 
-        println!("data: {}", String::from_utf8_lossy(&data));
+        if self.verbose >= 5 {
+            println!("Debug5: DSB: Json: {}", String::from_utf8_lossy(&data));
+        }
         let json: serde_json::Value = serde_json::from_str(&String::from_utf8_lossy(&data))?;
 
         if json.get("ResultMenuItems") == None {
@@ -344,7 +348,7 @@ impl Config {
                                 } else if name.local.to_string() == "center" && found_mod_head {
                                     if let Some(dsb) = dsb_return.last_mut() {
                                         let dsb: &mut DSB = dsb;
-                                        eprintln!("not implemented dsb center parse");
+                                        self.parse_center(w, dsb);
                                     }
                                     found_mod_head = false;
                                 }
@@ -355,6 +359,27 @@ impl Config {
         }
 
         Ok(dsb_return)
+    }
+
+    /// parse dsb center
+    fn parse_center(&self, node: &Node, dsb: &mut DSB) {
+        let mon_title: &Node = &node.children.borrow()[1];
+        let mon_title: &Node = &mon_title.children.borrow()[0];
+        if let NodeData::Text {
+            ref contents
+          } = mon_title.data {
+            let contents = escape_default(&contents.borrow());
+            dsb.parse_mon_title(&contents);
+        }
+
+        let info: &Node = &node.children.borrow()[3];
+
+        dsb.parse_info_table(info);
+
+
+
+        //println!("{:?}", info);
+
     }
 
     // walk throud dsb html
@@ -469,6 +494,7 @@ pub enum Building {
     E,
 }
 
+#[derive(Debug)]
 pub struct Teacher {
     pub name: String
 }
@@ -478,8 +504,9 @@ pub struct Room {
     pub room: i16,
 }
 
+#[derive(Debug)]
 pub struct Class {
-
+    pub name: String,
 }
 
 pub struct DSB {
@@ -600,6 +627,54 @@ impl DSB {
         let strs = info.split_ascii_whitespace().collect::<Vec<&str>>();
         self.date = chrono::NaiveDate::parse_from_str(strs[0], "%d.%m.%Y").unwrap();    //FIXME: unwrap
         Ok(())
+    }
+
+    /// parse info table
+    fn parse_info_table(&mut self, node: &Node) {
+        let node: &Node = &node.children.borrow()[1];
+
+        for v in node.children.borrow().iter() {
+            let v: &Node = v;
+            if v.children.borrow().len() != 2 {
+                continue;
+            } else {
+                let infoType: &Node = &v.children.borrow()[0];
+                let infoType: &Node = &infoType.children.borrow()[0];
+                let mut infoString = String::new();
+                if let NodeData::Text { ref contents } = infoType.data {
+                    infoString = escape_default(&contents.borrow());
+                }
+                let infoString = infoString.trim();
+
+                let content: &Node = &v.children.borrow()[1];
+                let content: &Node = &content.children.borrow()[0];
+                let mut contentString = String::new();
+                if let NodeData::Text { ref contents } = content.data {
+                    contentString = escape_default(&contents.borrow());
+                }
+                let contentString = contentString.trim();
+
+                if infoString.to_lowercase() == "abwesende lehrer" {
+                    let contentString: Vec<&str> = contentString.split(", ").collect();
+                    for v in contentString.iter() {
+                        let v: &str = v.trim();
+                        let v: Vec<&str> = v.split(" ").collect();
+                        if v.len() != 1 {
+                            eprintln!("Error: DSB: unimplemented: td.info.{{Abwesende Lehrer}}.len {{{}}} {:?}", v.len(), v);
+                        }
+                        self.missing_teachers.push(Teacher{name: v[0].to_string()});
+                    }
+                } else if infoString.to_lowercase() == "betroffene klassen" {
+                    let contentString: Vec<&str> = contentString.split(", ").collect();
+                    for v in contentString.iter() {
+                        let v: &str = v.trim();
+                        self.affected_classes.push(Class{name: v.to_string()});
+                    }
+                } else {
+                    eprintln!("Error: DSB: unimplemented: td.info.{{{}}} {{{}}}", infoString, contentString);
+                }
+            }
+        }
     }
 }
 
