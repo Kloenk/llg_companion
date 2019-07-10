@@ -9,6 +9,9 @@ pub mod planinfo;
 /// error structs
 pub mod error;
 
+/// http server
+pub mod server;
+
 #[doc(inline)]
 pub use error::Result;
 
@@ -48,6 +51,12 @@ impl Config {
     pub fn run(&self) -> Result<()> {
         
         println!("llgCompanion: {}", env!("CARGO_PKG_VERSION"));
+
+        self.dsb.run()?;
+
+        // run server
+        let server = server::Server::new(&self);
+        server.run();
 
         Ok(())
     }

@@ -24,4 +24,12 @@ impl Config {
             cookies: String::new(),
         }
     }
+
+    /// start parsing
+    pub fn run(self) -> Result<()> {
+        std::thread::spawn(move || {
+            
+        });
+        Ok(())
+    }
 }

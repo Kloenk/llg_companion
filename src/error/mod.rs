@@ -1,5 +1,6 @@
 use std::fmt;
 use std::io;
+use std::error::Error as std_error;
 
 // tests as sub module
 #[cfg(test)] // only add when running tests
@@ -105,6 +106,30 @@ impl std::convert::From<std::sync::mpsc::RecvError> for Error {
     fn from(_err: std::sync::mpsc::RecvError) -> Self {
         Error {
             my_kind: ErrorKind::ReceiveError,
+        }
+    }
+}
+
+impl std::convert::From<reqwest::Error> for Error {
+    fn from(err: reqwest::Error) -> Self {
+        Error {
+            my_kind: ErrorKind::Other(err.to_string()),
+        }
+    }
+}
+
+impl std::convert::From<serde_json::error::Error> for Error {
+    fn from(err: serde_json::error::Error) -> Self {
+        Self {
+            my_kind: ErrorKind::NotParsable(err.to_string()),
+        }
+    }
+}
+
+impl std::convert::From<base64::DecodeError> for Error {
+    fn from(err: base64::DecodeError) -> Self {
+        Self {
+            my_kind: ErrorKind::NotParsable(err.description().to_string()),
         }
     }
 }
