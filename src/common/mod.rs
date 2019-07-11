@@ -1,27 +1,17 @@
 #[derive(Debug)]
 pub enum Room {
     None,
-    A {
-        room: i16,
-    },
-    B {
-        room: i16,
-    },
-    C {
-        room: i16,
-    },
-    D {
-        room: i16,
-    },
-    E {
-        room: i16,
-    },
+    A { room: i16 },
+    B { room: i16 },
+    C { room: i16 },
+    D { room: i16 },
+    E { room: i16 },
 }
 
 impl Room {
     /// create new none room
     pub fn new() -> Self {
-        Room::None
+        Default::default()
     }
     /// parse dbs string
     pub fn from_dsb_str(input: &str) -> Self {
@@ -50,6 +40,12 @@ impl Room {
     }
 }
 
+impl Default for Room {
+    fn default() -> Self {
+        Room::None
+    }
+}
+
 #[derive(Debug)]
 pub struct Teacher {
     pub name: String,
@@ -63,10 +59,17 @@ impl Teacher {
     }
 }
 
+impl Default for Teacher {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[derive(Debug)]
 pub struct Hour {
     /// room where the period takes place
     pub room: Room,
-    
+
     /// Teacher of this course
     pub teacher: Teacher,
 
@@ -75,6 +78,28 @@ pub struct Hour {
 
     /// course
     pub course: Course,
+}
+
+impl Hour {
+    pub fn new() -> Self {
+        Default::default()
+    }
+    pub fn parse_planinfo(&mut self, input: &str) {
+        self.course = Course::Sec1 {
+            name: input.to_string(),
+        };
+    }
+}
+
+impl Default for Hour {
+    fn default() -> Self {
+        Self {
+            room: Default::default(),
+            teacher: Default::default(),
+            is_tutor: false,
+            course: Default::default(),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -91,8 +116,8 @@ pub enum Course {
     Sec2Exam {
         track: u8,
         name: String,
-        kind:CourseKind,
-    }
+        kind: CourseKind,
+    },
 }
 
 impl Course {
@@ -108,41 +133,58 @@ impl Course {
         }
 
         if class.is_empty() && class.contains("---") {
-            eprintln!("Error: DSB: Course: could not parse {} (empty string)", class);
+            eprintln!(
+                "Error: DSB: Course: could not parse {} (empty string)",
+                class
+            );
             return Course::None;
         }
         if class.to_lowercase().contains("klausur") {
             eprintln!("Error: DSB: Course: could not parse exam: {{{}}}", course);
-            return Course::Sec2Exam { track: 0, name: String::new(), kind: CourseKind::GK { number: 0, }, };
+            return Course::Sec2Exam {
+                track: 0,
+                name: String::new(),
+                kind: CourseKind::GK { number: 0 },
+            };
         }
 
         let sClass: u32 = (class.as_bytes()[0] as u32 - '0' as u32) as u32;
         if sClass > 0 || sClass < 9 {
-            return Course::Sec1 { name: course.to_string() };
+            return Course::Sec1 {
+                name: course.to_string(),
+            };
         }
 
         let course: Vec<&str> = course.split("-").collect();
         if course.len() != 2 {
-            eprintln!("Error: DSB: Course: could not parse {} (wrong number of arguments)", course.connect(" "));
+            eprintln!(
+                "Error: DSB: Course: could not parse {} (wrong number of arguments)",
+                course.connect(" ")
+            );
             return Course::None;
         }
         let name = course[0].to_ascii_uppercase();
         let kind: CourseKind = CourseKind::from_dsb_str(course[1]);
-        
 
-        Course::Sec2 { track: 0, name, kind } 
+        Course::Sec2 {
+            track: 0,
+            name,
+            kind,
+        }
+    }
+}
+
+impl Default for Course {
+    fn default() -> Self {
+        Course::None
     }
 }
 
 #[derive(Debug)]
 pub enum CourseKind {
     None,
-    GK {
-        number: u8,
-    },
-    LK {
-        number: u8,
-    }
+    GK { number: u8 },
+    LK { number: u8 },
 }
 
 impl CourseKind {
@@ -157,7 +199,10 @@ impl CourseKind {
             return CourseKind::None;
         }
         if kind.len() != 3 {
-            eprintln!("Error: DSB: CourseKind: kind string is not len 3 {{{}}}", kind);
+            eprintln!(
+                "Error: DSB: CourseKind: kind string is not len 3 {{{}}}",
+                kind
+            );
             return CourseKind::None;
         }
         let number: u8 = (kind.as_bytes()[2] as u32 - '0' as u32) as u8;
@@ -167,7 +212,7 @@ impl CourseKind {
             return CourseKind::LK { number };
         } else {
             eprintln!("Error: DSB: CourseKind: error parsing {{{}}}", kind);
-            return CourseKind::None
+            return CourseKind::None;
         }
     }
 }

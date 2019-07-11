@@ -1,0 +1,319 @@
+<html lang="de" class="gr__selbstlernportal_de">
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SLP-PlanInfo | Anzeige</title>
+  <meta name="author" content="Michael Ziemke, Koeln">
+  <meta name="keywords" content="PlanInfo Stundenplan Anzeige anzeigen Auskunft PHP Untis SchILD Kurs">
+  <link rel="stylesheet" href="planinfo.css" type="text/css">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="icon" href="favicon.png" type="image/png" sizes="192x192">
+  <noscript><h3 class="javaDisabled" title="JavaScript in Firefox einschalten auf Seite: about:config und nach Suche: javascript.enabled diesen Wert setzen auf: true">
+    JavaScript muss für diese Seite aktiviert sein!
+  </h3></noscript>
+ </head>
+ <body class="anzeige" data-gr-c-s-loaded="true">
+    <div class="row noprint">
+     <div class="colmob-70 col-10 col-m-10">
+      <p class="plan2">DO, 11.07.2019 | KW 28 | A-Woche</p>
+      <p class="plan2">Stundenplan nach 4. Quartal ab Mo, 13.5.2019</p>
+      <p class="plan2" onclick="window.open(&quot;planinfo_chart.php?ug=lev-llg&quot;, &quot;SLP-Chart&quot;);" title="Besucher-Statistik seit August 2015 - Links-Klick zeigt 31-Tage-Statistik-Diagramm">Sie sind Besucher Nr. 640.114&nbsp;<img src="./images/chart_big.png" style="height:1.0em;"></p>
+     </div>
+     <div class="colmob-30 col-2 col-m-2">
+      <input type="image" class="plan plan24a" src="images/bookmark.png" value="Link" onclick="window.open(&quot;/html/planinfo/planinfo_start.php?ug=lev-llg&amp;search=Behrens&quot;,&quot;_self&quot;)" alt="Link" title="Link-Adresse für Lesezeichen-Ablage optimieren (vgl. YouTube-Tutorial)!">
+      <input type="image" class="plan plan24a" src="images/print.png" value="Print" onclick="window.print();" alt="Drucken" title="Drucken">
+      <input type="image" class="plan plan24a" src="images/out.png" value="Logout" onclick="location.href='./planinfo_login.inc.php?logout=1';" alt="Logout" title="Logout">
+     </div>
+    </div> 
+     
+   <!-- Beginn Abfrage responsive -->
+    <div class="row noprint">
+     <div class="col-12 col-m-12">
+      <p class="info">Bitte geben Sie eine Bezeichnung in der Schnellsuche an <b>oder</b> wählen Sie die Planart:</p>
+     </div>
+    </div> 
+    
+    <div class="row noprint">
+     <div class="col-4 col-m-4">
+      <p class="label">Schnellsuche:</p>
+      <form action="/html/planinfo/planinfo_start.php?ug=lev-llg" method="post" accept-charset="utf-8" style="display:inline;"><input class="plan" type="text" name="search" id="search" value="" placeholder="Kürzel, Klasse, Raum, Nachname, GO-Stufe" maxlength="30" title="Eingabe (Schüler-Nachname, Lehrer-Kürzel, Raumbezeichnung, Klasse, GO-Stufe) beenden mit [Enter] oder [OK]"><input type="hidden" name="wochewahl" value="A">&nbsp;<input class="plan plan24" type="image" src="images/ok.png" value="Start" onclick="submit();" alt="Anzeigen" title="Anzeigen"><input type="hidden" name="scrolling" id="scrolling" value=""></form><input type="hidden" id="dbidx" value="335">
+     </div>
+     <div class="col-5 col-m-5">
+      <p class="label">Planart:</p>
+      <select class="plan" name="artwahl" id="artwahl" onchange="bildeObjektWahl()" size="1"><optgroup><option selected="selected" value=" ">bitte wählen</option><option value="L">Lehrer</option><option value="K">Klasse</option><option value="R">Raum</option><option value="O">GO-Stufe</option></optgroup></select>
+     </div>
+     <div class="col-3 col-m-3">
+    
+        <p class="label">Wochentyp:</p>
+        <select class="plan" name="sel_woche" id="sel_woche" onchange="zeigePlan()" margin:="" 0%="" 7%;="" size="1"><optgroup><option selected="selected" value="A">A-Woche</option><option value="B">B-Woche</option></optgroup></select>
+     </div>
+    </div>
+<!-- Ende Abfrage responsive -->
+    <span class="noprint"><p style="color:red; margin:4px 0px; font-weight:bold;">Stundenpläne 4. Quartal nach Q2, gültig ab Montag, den 13.05.2019!</p></span>
+<div class="plan"> <!-- Beginn Stundenplan-Tabelle -->
+ <table class="plan">
+  
+  <thead>
+  <tr>
+   <th class="titel" colspan="6">A-Woche-Stundenplan von Schüler/in Finn B.<span class="noprint"> <img src="images/help.gif" title="Schüler/in Finn Lasse Behrens (EFk-FOM)"></span> (EFk-FOM)</th>
+  </tr>
+  <tr>
+   <th class="std">S\T</th>
+   <th class="wotag">Montag</th>
+   <th class="wotag">Dienstag</th>
+   <th class="wotag">Mittwoch</th>
+   <th class="wotag">Donnerstag</th>
+   <th class="wotag">Freitag</th>
+   
+  </tr>
+  </thead>
+  <tbody>
+<tr class="plan"><th class="std">1</th><td class="plan">(G6) RK-GK1 MEB A212</td><td class="plan">(G4) R0-GK1 FAST A209</td><td class="plan">(G8) PL-GK1 BRB A206</td><td class="plan">(G3) TC-GK1 ALBR B212</td><td class="plan">() E-GK11 REM A112</td></tr><tr class="plan"><th class="std">2</th><td class="plan">(G6) RK-GK1 MEB A212</td><td class="plan">(G4) R0-GK1 FAST A209</td><td class="plan">(G8) PL-GK1 BRB A206</td><td class="plan">(G3) TC-GK1 ALBR B212</td><td class="plan">() E-GK11 REM A112</td></tr><tr class="plan"><th class="std">3</th><td class="plan">() D-GK11 HERM A209</td><td class="plan">(G1) PH-GK3 KRD B127</td><td class="plan">(G7) SWe-GK1 FISH A211</td><td class="plan">() M-GK11 FOM A209</td><td class="plan">() M-GK11 FOM A211</td></tr><tr class="plan"><th class="std">4</th><td class="plan">() D-GK11 HERM A209</td><td class="plan">(G1) PH-GK3 KRD B127</td><td class="plan">(G7) SWe-GK1 FISH A211</td><td class="plan">() M-GK11 FOM A209</td><td class="plan">() M-GK11 FOM A211</td></tr><tr class="plan"><th class="std">5</th><td class="plan">(G8) PL-GK1 BRB A207</td><td class="plan">(G5) MU-GK4 FRI B015</td><td class="plan">(G6) RK-GK1 MEB A212</td><td class="plan">(G2) IF-GK1 DOHE A306<br>(G2) IF-GK1 DOHE A308</td><td class="plan">(G5) MU-GK4 FRI B015</td></tr><tr class="plan"><th class="std">6</th><td class="plan">(G8) PL-GK1 BRB A207</td><td class="plan">(G5) MU-GK4 FRI B015</td><td class="plan">(G6) RK-GK1 MEB A212</td><td class="plan">(G2) IF-GK1 DOHE A306<br>(G2) IF-GK1 DOHE A308</td><td class="plan">(G5) MU-GK4 FRI B015</td></tr><tr class="plan"><th class="std">7</th><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan">(G7) SWe-GK1 FISH A211</td></tr><tr class="plan"><th class="std">8</th><td class="plan">(G3) TC-GK1 ALBR B212</td><td class="plan"></td><td class="plan">() SP-GK11 HEGG D001</td><td class="plan">() D-GK11 HERM A211</td><td class="plan">(G4) R0-GK1 FAST A205</td></tr><tr class="plan"><th class="std">9</th><td class="plan">(G3) TC-GK1 ALBR B212</td><td class="plan"></td><td class="plan">() SP-GK11 HEGG D001</td><td class="plan">() D-GK11 HERM A211</td><td class="plan">(G4) R0-GK1 FAST A205</td></tr><tr class="plan"><th class="std">10</th><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan"></td></tr><tr class="plan"><th class="std">11</th><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan"></td></tr><tr class="plan"><th class="std">12</th><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan"></td></tr>
+  </tbody>
+ 
+    <thead>
+  <tr class="onlyprint">
+   <th colspan="6">&nbsp;</th>
+  </tr>
+  <tr class="onlyprint">
+   <th class="titel" colspan="6">B-Woche-Stundenplan von Schüler/in Finn B.<span class="noprint"> <img src="images/help.gif" title="Schüler/in Finn Lasse Behrens (EFk-FOM)"></span> (EFk-FOM)</th>
+  </tr>
+  <tr class="onlyprint">
+   <th class="std">S\T</th>
+   <th class="wotag">Montag</th>
+   <th class="wotag">Dienstag</th>
+   <th class="wotag">Mittwoch</th>
+   <th class="wotag">Donnerstag</th>
+   <th class="wotag">Freitag</th>
+   
+  </tr>
+  </thead>
+  <tbody>
+<tr class="plan onlyprint"><th class="std">1</th><td class="plan">(G7) SWe-GK1 FISH A211</td><td class="plan">() D-GK11 HERM A008</td><td class="plan">(G8) PL-GK1 BRB A206</td><td class="plan">() E-GK11 REM A211</td><td class="plan">(G2) IF-GK1 DOHE A306<br>(G2) IF-GK1 DOHE A308</td></tr><tr class="plan onlyprint"><th class="std">2</th><td class="plan">(G7) SWe-GK1 FISH A211</td><td class="plan">() D-GK11 HERM A008</td><td class="plan">(G8) PL-GK1 BRB A206</td><td class="plan">() E-GK11 REM A211</td><td class="plan">(G2) IF-GK1 DOHE A306<br>(G2) IF-GK1 DOHE A308</td></tr><tr class="plan onlyprint"><th class="std">3</th><td class="plan">() M-GK11 FOM A010</td><td class="plan">(G1) PH-GK3 KRD B127</td><td class="plan">(G4) R0-GK1 FAST A209</td><td class="plan">(G5) MU-GK4 FRI B012</td><td class="plan">(G1) PH-GK3 KRD B127</td></tr><tr class="plan onlyprint"><th class="std">4</th><td class="plan">() M-GK11 FOM A010</td><td class="plan">(G1) PH-GK3 KRD B127</td><td class="plan">(G4) R0-GK1 FAST A209</td><td class="plan">(G5) MU-GK4 FRI B012</td><td class="plan">(G1) PH-GK3 KRD B127</td></tr><tr class="plan onlyprint"><th class="std">5</th><td class="plan">(G4) R0-GK1 FAST A209</td><td class="plan">() KL-GK11 FOM B202</td><td class="plan">(G6) RK-GK1 MEB A212</td><td class="plan">(G3) TC-GK1 ALBR B212</td><td class="plan">() E-GK11 REM A112</td></tr><tr class="plan onlyprint"><th class="std">6</th><td class="plan">(G4) R0-GK1 FAST A209</td><td class="plan">() KL-GK11 FOM B202</td><td class="plan">(G6) RK-GK1 MEB A212</td><td class="plan">(G3) TC-GK1 ALBR B212</td><td class="plan">() E-GK11 REM A112</td></tr><tr class="plan onlyprint"><th class="std">7</th><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan">(G7) SWe-GK1 FISH A211</td></tr><tr class="plan onlyprint"><th class="std">8</th><td class="plan">(G2) IF-GK1 DOHE A310</td><td class="plan"></td><td class="plan"></td><td class="plan">() SP-GK11 HEGG D003</td><td class="plan"></td></tr><tr class="plan onlyprint"><th class="std">9</th><td class="plan">(G2) IF-GK1 DOHE A310</td><td class="plan"></td><td class="plan"></td><td class="plan">() SP-GK11 HEGG D003</td><td class="plan"></td></tr><tr class="plan onlyprint"><th class="std">10</th><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan"></td></tr><tr class="plan onlyprint"><th class="std">11</th><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan"></td></tr><tr class="plan onlyprint"><th class="std">12</th><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan"></td><td class="plan"></td></tr>
+  </tbody>
+  
+ </table>
+ </div> <!-- Ende Stundenplan-Tabelle -->
+ 
+ <div style="margin-top: 6px;"> <!-- Beginn Footer -->
+  <!-- Footer nur für den Ausdruck: -->
+  <div class="onlyprint label center"> 
+   SLP-PlanInfo v2.7.4  (c) Feb 2019 SLP-CodingTeam
+   .:. gedruckt am 11.7.2019
+  </div>
+  
+  <!-- Footer responsiv: -->
+  <div class="row noprint label center">
+   <div class="col-4">
+     <span style="font-weight:bold; color:black; color:black;">Lizenz bis 01.11.2019: </span>
+     SLP-PlanInfo&nbsp;v2.7.4
+     [<a href="planinfo_eingabe-tipps.pdf" target="PlanInfo-Tipps" style="background-color: orange;">Tipps</a>]&nbsp;<a href="https://www.youtube.com/channel/UCF76sagowjK7cQKync3ONmw/videos" target="_blank" title="NEU: SLP-PlanInfo-Anleitungen auf dem YouTube-Kanal SLP SelbstLernPortal"><img src="../images/logo_youtube.png" style="height:1.2em; vertical-align:middle;"></a>
+   </div>
+   <div class="col-4">
+     (c) Feb 2019 SLP-CodingTeam
+     [<a href="../impressum.htm" target="_blank">Impressum</a>]&nbsp;[<a href="../datenschutz.pdf" target="_blank">Datenschutz</a>]
+   </div>
+   <div class="col-4">
+     [<a href="planinfo_history.php" target="_blank">Info/History</a>]&nbsp;[<a href="planinfo_hinweise.pdf" target="_blank">Manual</a>]&nbsp;[<a href="planinfo_login_admin.php?ug=lev-llg&amp;log=admin" target="_blank">Admin</a>]&nbsp;[<a href="planinfo_login_admin.php?ug=lev-llg&amp;log=orga" target="_blank">Orga-Tools</a>]
+   </div>
+  </div>
+ </div> <!-- Ende Footer -->
+
+ <script>
+  // falls aber das Objekt-Select existiert, dann dieses fokusieren,
+  // um das Blättern mit Pfeiltasten zu ermöglichen:
+  obj=document.getElementById("objektwahl");
+  if(obj) {
+    obj.focus();
+  } else {
+    obj=document.getElementById("search");
+    // Falls es das Schnellsuche-Eingabefeld (also NICHT die Auswahl) gibt,
+    // dann dieses fokusieren, um Eingaben direkt dorthin zu leiten:
+    // ABER NICHT auf mobilen Geräten, da sonst die Tastatur eingeblendet wird!
+    //if(obj && (typeof(document.ontouchstart) != "undefined")) obj.focus();
+    // ABER: ohne Focus keine Grün-Färbung des Eingabefeldes, also weiterhin:
+    if(obj) obj.focus();
+  }
+ </script>
+
+<!-- FORTSETZUNG HTML -->
+
+  <script language="JavaScript">
+   <!--
+   function getParmVal (key) {
+     ret = '';
+     if ((key != '') && (document.URL.indexOf('?') > -1)) {
+       parmS = document.URL.slice(document.URL.indexOf('?')+1);
+       parmA = parmS.split('&');
+       // Parameter key=xxx finden:
+       for (var i = 0; i < parmA.length; i++) {
+         tmp = parmA[i].split('=');
+         if (tmp[0] == key)
+           ret = tmp[1];
+        }
+      }
+     return ret;
+    }
+
+   function pruefeCookiesErlaubt() {
+    if( ! navigator.cookieEnabled ) {
+      info = 'Cookies sollten erlaubt sein,\nansonsten wird für den nächsten Besuch\ndie Schulauswahl nicht gespeichert.';
+     } else if( navigator.cookieEnabled ) {
+      info = '';
+      // ok
+     } else {
+      info = 'Die Cookie-Einstellung des Browsers ist nicht feststellbar.\nBitte überprüfen Sie selbst,\ndass Cookies erlaubt sind (empfohlen).';
+     }
+    if (info != '') alert (info);
+   }
+
+   function bildeObjektWahl() {
+     obj = document.getElementById("artwahl");
+     selart = obj[obj.selectedIndex].value;
+//alert ('Selektiert: '+selart);
+     // Parameter abschneiden:
+     uri = document.URL;
+     if (document.URL.indexOf('?')>-1)
+       uri = document.URL.slice(0, document.URL.indexOf('?'));
+     ugparm = getParmVal ('ug');
+     if (ugparm != '') ugparm = "ug=" + ugparm;
+     //location.href=uri+"?artwahl="+selart;
+     location.href=uri+"?"+ugparm+"&artwahl="+selart;
+    }
+
+  /**
+   * @version 2018-04
+   */   
+  function zeigePlan() {
+     ugparm = '';  // Parameter ug=[USER_LOWER]
+     dbparm = '';
+     scrollparm = '';
+     obj = document.getElementById("dbidx");  // Schnellsuche-Eingabefeld
+     if (obj && obj.value != '') {
+       // Soeben gelang eine Schnellsuche; nun ggf. WochenWahl gewünscht;
+       // also nach Wochenwechsel Plan zum vorherigen Schnellsuche-Ergebnis:
+       dbparm = '&dbidx=' + obj.value;
+      }
+     artparm = '';
+     obj = document.getElementById("artwahl");
+     if (obj) {
+       selart = obj[obj.selectedIndex].value;
+       if (obj.selectedIndex > 0)
+         artparm = "&artwahl="+selart;
+      }
+     objidx = 0; selobjekt = '';
+     objektparm = '';
+     obj = document.getElementById("objektwahl");  // SelObjekt heiß objektwahl!
+     if (obj && (obj.selectedIndex > 0)) {
+       // Schnellsuche-Zweitauswahl oder Objekt-Auswahl:
+       objselidx = obj.selectedIndex;
+       dbindex_  = obj.options[obj.selectedIndex].value;
+       dbparm = "&dbidx=" + dbindex_;
+       // ArtWahl getroffen, also keine Schnellsuche-Zweitauswahl:
+       if (artparm != '')
+         objektparm = "&objselid=" + objselidx;
+      }
+     wocheparm = '';
+     obj =  document.getElementById("sel_woche");
+     if (obj) wocheparm = '&wochewahl='+obj.options[obj.selectedIndex].value;
+     scrollparm = "";
+     obj = document.getElementById("scrolling");
+     if (obj && (obj.value != ''))
+       scrollparm = '&scrolling=' + obj.value;
+//alert(scrollparm);
+     
+  info =
+  'DEBUG in zeigePlan(); alle Params:'
+  +'\nartparm = ['+artparm+']'
+  +'\nobjektparm = ['+objektparm+']'
+  +'\nwocheparm = ['+wocheparm+']'
+  +'\ndbparm = ['+dbparm+']'
+ ;
+     // Parameter abschneiden:
+     uri = document.URL;
+     if (document.URL.indexOf('?') > -1) {
+       // Parameter ug=xxx finden:
+       ugparm = getParmVal ('ug');
+       if (ugparm != '') ugparm = "&ug=" + ugparm;
+       uri = document.URL.slice(0, document.URL.indexOf('?'));
+      }
+     /*
+     if (selart.replace(/ /g, "") != '') {
+//alert(info+'\n   THEN-Aufruf');
+       // parm = artparm+objektparm+wocheparm+dbparm;
+       parm = ugparm+artparm+objektparm+wocheparm+dbparm;
+      } else {
+       // bisher keine ArtWahl getroffen; für QuickSearch:
+       // location.href=uri+"?objektwahl="+obj.selectedIndex+"&objektid="+selobjekt;
+//alert(info+'\n   ELSE-Aufruf');
+       //parm = artparm+objektparm+wocheparm+dbparm;
+       parm = ugparm+artparm+objektparm+wocheparm+dbparm;
+      }
+     */
+     parm = ugparm+artparm+objektparm+wocheparm+dbparm+scrollparm;
+//alert ('DEBUG in planinfo.inc/zeigePlan(): uri+?+parm='+uri + '?' + parm.substr(1));
+     location.href=uri + '?' + parm.substr(1);
+    }
+
+  /**
+   * prüft auf Pfeiltasten-Druck, falls Parameter dbidx existiert,
+   * und legt im Formular-Objekt mit Name scrolling ggf. den Wert prev oder next ab.
+   * @version 2018-04
+   */   
+  function pruefeObjektwechsel(ereignis) {
+//document.getElementById("test").innerHTML = location.search.search(/&objektwahl=/g);
+    // if (location.search.search(/&objektwahl=/g)>-1) {
+//alert("Start von pruefeObjektWechsel()");
+    if (location.search.search(/&dbidx=/g)>-1) {
+//alert("location.search="+location.search);
+      // nur bei bereits erfolgter Objektwahl:
+      if (!ereignis)
+       ereignis = window.event;
+      if (ereignis.which) {
+        tastencode = ereignis.which;
+       } else if (ereignis.keyCode) {
+        tastencode = ereignis.keyCode;
+       }
+
+      // Falls Pfeil auf oder Pfeil ab gedrückt, neuen Plan zeigen
+      if (tastencode > 36 && tastencode < 41) {
+//alert("tastencode="+tastencode);
+        obj = document.getElementById("scrolling");
+        obj.value = "";
+        if (tastencode == 38 || tastencode == 37) {
+          obj.value = "prev";
+//alert("Pfeil links oder oben");
+        }  
+        if (tastencode == 40 || tastencode == 39) {
+          obj.value = "next";
+//alert("Pfeil rechts oder unten");
+        }  
+        /*
+        obj.options[obj.selectedIndex].select = true;
+       */
+//alert("document.getElementById(scrolling).value="+document.getElementById("scrolling").value);
+         zeigePlan();
+       }
+     }
+   }
+
+   function setzeFocus() {
+     //if (location.search.search(/&objektwahl=/g)>-1) {
+     if (location.search.search(/&objselid=/g)>-1) {
+       obj = document.getElementById("objektwahl");
+       obj.focus();
+       //obj.select();
+       //obj[obj.selectedIndex].caption.select();
+       //document.getElementById("objektwahl").select();
+      }
+    }
+   // nur für IE nötig:
+   //if (document.all)
+   //  setzeFocus();
+   document.onkeyup = pruefeObjektwechsel;
+   //document.onkeyup = function(){alert("TEST");};
+   //-->
+   </script>
+   <noscript>JavaScript ist nicht aktiviert!</noscript>
+ 
+</body></html>

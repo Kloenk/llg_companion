@@ -12,7 +12,7 @@ use html5ever::tendril::TendrilSink;
 #[doc(inline)]
 pub use super::error::Result;
 
-pub use super::common::{Room, Teacher, Course};
+pub use super::common::{Course, Room, Teacher};
 
 /// config struct for dsb informations
 #[derive(Clone)]
@@ -57,8 +57,10 @@ impl Config {
 
     /// internal run function holding the mail loop of the thread
     fn run_int(self) {
-        self.get();
-        loop {}
+        loop {
+            self.get();
+            std::thread::sleep(std::time::Duration::from_secs(600)); //sleep 10 min
+        }
     }
 
     /// get dsb content
@@ -312,7 +314,6 @@ impl Config {
             .read_from(&mut html.as_bytes())
             .unwrap();
         let dsb = self.parse_dom(&dom.document).unwrap();
-        println!("{:?}", dsb);
         Ok(dsb)
     }
 
@@ -427,13 +428,15 @@ impl Config {
                     let course: &Node = &course.children.borrow()[0];
                     if let NodeData::Text { ref contents } = course.data {
                         let contents = escape_default(&contents.borrow());
-                        entrie.course = Course::from_dsb_str(&entrie.name, contents.trim().trim_matches('-'));
+                        entrie.course =
+                            Course::from_dsb_str(&entrie.name, contents.trim().trim_matches('-'));
                     }
                     let course: &Node = &v.children.borrow()[4];
                     let course: &Node = &course.children.borrow()[0];
                     if let NodeData::Text { ref contents } = course.data {
                         let contents = escape_default(&contents.borrow());
-                        entrie.old_course = Course::from_dsb_str(&entrie.name, contents.trim().trim_matches('-'));
+                        entrie.old_course =
+                            Course::from_dsb_str(&entrie.name, contents.trim().trim_matches('-'));
                     }
                     let message: &Node = &v.children.borrow()[5];
                     let message: &Node = &message.children.borrow()[0];

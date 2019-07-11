@@ -56,6 +56,8 @@ impl Config {
 
         self.dsb.run()?;
 
+        self.planino.run()?;
+
         // run server
         let server = server::Server::new(&self);
         server.run();

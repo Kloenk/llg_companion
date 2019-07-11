@@ -74,6 +74,20 @@ fn main() {
                 .value_name("COOKIE"),
         )
         .arg(
+            Arg::with_name("planinfo.max_misses")
+                .long("planinfo.misses")
+                .help("set max planinfo misses befor marking scan as completed")
+                .takes_value(true)
+                .value_name("COUNT"),
+        )
+        .arg(
+            Arg::with_name("planinfo.hit_delay")
+                .long("planinfo.delay")
+                .help("set delay between planinfo requests")
+                .takes_value(true)
+                .value_name("SECONDS"),
+        )
+        .arg(
             Arg::with_name("impressum")
                 .long("impressum")
                 .short("i")
@@ -254,9 +268,37 @@ fn main() {
         conf.planino.cookies = cookie.to_string();
     } else if let Some(config) = &config {
         if let Some(planinfo) = config.get("planinfo") {
-            if let Some(cookie) = planinfo.get("url") {
+            if let Some(cookie) = planinfo.get("cookie") {
                 if let Some(cookie) = cookie.as_str() {
                     conf.planino.cookies = cookie.to_string();
+                }
+            }
+        }
+    }
+
+    if let Some(max_misses) = &matches.value_of("planinfo.max_misses") {
+        conf.planino.max_misses = max_misses.parse().unwrap_or(conf.planino.max_misses);
+    } else if let Some(config) = &config {
+        if let Some(planinfo) = config.get("planinfo") {
+            if let Some(misses) = planinfo.get("misses") {
+                if let Some(misses) = misses.as_integer() {
+                    conf.planino.max_misses = misses as usize;
+                }
+            }
+        }
+    }
+
+    if let Some(hit_delay) = &matches.value_of("planinfo.hit_delay") {
+        conf.planino.delay_hits = std::time::Duration::from_secs(
+            hit_delay
+                .parse()
+                .unwrap_or(conf.planino.delay_hits.as_secs()),
+        )
+    } else if let Some(config) = &config {
+        if let Some(planinfo) = config.get("planinfo") {
+            if let Some(delay) = planinfo.get("delay") {
+                if let Some(delay) = delay.as_integer() {
+                    conf.planino.delay_hits = std::time::Duration::from_secs(delay as u64);
                 }
             }
         }

@@ -11,7 +11,9 @@ impl Server {
     }
     /// start server
     pub fn run(&self) -> Result<()> {
-        loop {}
+        loop {
+            std::thread::sleep(std::time::Duration::from_secs(999999));
+        }
         Ok(())
     }
 }
