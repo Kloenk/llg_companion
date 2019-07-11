@@ -1,5 +1,9 @@
+
+
 #[doc(inline)]
 pub use super::error::Result;
+
+pub use super::common::{Room, Teacher};
 
 /// config struct for planinfo
 pub struct Config {
@@ -12,6 +16,9 @@ pub struct Config {
 
     /// cookies for auth at planinfo
     pub cookies: String,
+
+    /// verbose level
+    pub verbose: u8,
 }
 
 impl Config {
@@ -21,6 +28,7 @@ impl Config {
             base_url: String::from("https://selbstlernportal.de/html/planinfo/planinfo_start.php"),
             school_id: String::new(),
             cookies: String::new(),
+            verbose: 0,
         }
     }
 
@@ -30,3 +38,15 @@ impl Config {
         Ok(())
     }
 }
+
+pub struct PlanInfo {
+    /// teachers in planinfo
+    pub teachers: Vec<Teacher>,
+}
+
+
+/* pub struct Teacher {
+    /// symbol of the teacher
+    pub symbol: String,
+
+} */

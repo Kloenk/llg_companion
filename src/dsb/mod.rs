@@ -12,6 +12,8 @@ use html5ever::tendril::TendrilSink;
 #[doc(inline)]
 pub use super::error::Result;
 
+pub use super::common::{Room, Teacher, Course};
+
 /// config struct for dsb informations
 #[derive(Clone)]
 pub struct Config {
@@ -310,6 +312,7 @@ impl Config {
             .read_from(&mut html.as_bytes())
             .unwrap();
         let dsb = self.parse_dom(&dom.document).unwrap();
+        println!("{:?}", dsb);
         Ok(dsb)
     }
 
@@ -418,30 +421,19 @@ impl Config {
                         let contents = escape_default(&contents.borrow());
                         let mut teacher: Teacher = Teacher::new();
                         teacher.name = contents.trim().trim_matches('-').to_string();
-                        entrie.old_teacher = teacher;
+                        entrie.new_teacher = teacher;
                     }
                     let course: &Node = &v.children.borrow()[3];
                     let course: &Node = &course.children.borrow()[0];
                     if let NodeData::Text { ref contents } = course.data {
                         let contents = escape_default(&contents.borrow());
-                        let mut course: Course = Course::new();
-                        course.name = contents.trim().trim_matches('-').to_string();
-                        entrie.course = course;
+                        entrie.course = Course::from_dsb_str(&entrie.name, contents.trim().trim_matches('-'));
                     }
                     let course: &Node = &v.children.borrow()[4];
                     let course: &Node = &course.children.borrow()[0];
                     if let NodeData::Text { ref contents } = course.data {
-                        let contents = escape_default(&contents.borrow())
-                            .trim()
-                            .trim_matches('-')
-                            .to_string();
-                        if contents.is_empty() {
-                            entrie.old_course = None;
-                        } else {
-                            let mut course: Course = Course::new();
-                            course.name = contents;
-                            entrie.old_course = Some(course);
-                        }
+                        let contents = escape_default(&contents.borrow());
+                        entrie.old_course = Course::from_dsb_str(&entrie.name, contents.trim().trim_matches('-'));
                     }
                     let message: &Node = &v.children.borrow()[5];
                     let message: &Node = &message.children.borrow()[0];
@@ -469,7 +461,7 @@ impl Config {
                             .trim_matches('-')
                             .to_string();
                         if !room.is_empty() {
-                            entrie.room = Some(Room::from_str(&room));
+                            entrie.room = Room::from_dsb_str(&room);
                         }
                     }
                 } else {
@@ -506,67 +498,6 @@ impl Week {
             'B' => return Week::B,
             _ => return Week::NoWeek(input),
         }
-    }
-}
-
-/// enum for buildings
-#[derive(Debug)]
-pub enum Building {
-    A,
-    B,
-    C,
-    D,
-    E,
-    Other,
-}
-
-#[derive(Debug)]
-pub struct Teacher {
-    pub name: String,
-}
-
-impl Teacher {
-    pub fn new() -> Self {
-        Self {
-            name: String::new(),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct Room {
-    pub building: Building,
-    pub room: i16,
-}
-
-impl Room {
-    pub fn new() -> Self {
-        Self {
-            building: Building::Other,
-            room: 0,
-        }
-    }
-    pub fn from_str(input: &str) -> Self {
-        let mut room = Self::new();
-        if input.len() != 4 {
-            eprintln!("Error: DSB: Room: from_str: {} not len 4", input);
-            return room;
-        }
-        if input.to_lowercase().trim().starts_with("a") {
-            room.building = Building::A;
-        } else if input.to_lowercase().trim().starts_with("b") {
-            room.building = Building::B;
-        } else if input.to_lowercase().trim().starts_with("c") {
-            room.building = Building::C;
-        } else if input.to_lowercase().trim().starts_with("d") {
-            room.building = Building::D;
-        } else if input.to_lowercase().trim().starts_with("e") {
-            room.building = Building::E;
-        }
-        let input: &str = input.split_at(1).1;
-        room.room = input.parse().unwrap_or(0);
-
-        room
     }
 }
 
@@ -771,6 +702,7 @@ pub enum EntryKind {
     Dropped,
     Special,
     Changed,
+    Room,
 }
 
 impl EntryKind {
@@ -788,6 +720,8 @@ impl EntryKind {
             return EntryKind::Changed;
         } else if input.to_lowercase().contains("betreuung") {
             return EntryKind::Special;
+        } else if input.to_lowercase().contains("raum") {
+            return EntryKind::Room;
         } else {
             eprintln!("Error: DBS: EntryKind: could not parse {}", input);
             return EntryKind::Unknow(input.to_string());
@@ -799,13 +733,13 @@ impl EntryKind {
 pub struct Entry {
     pub name: String,
     pub course: Course,
-    pub old_course: Option<Course>,
+    pub old_course: Course,
     pub time: Duration,
-    pub new_teacher: Option<Teacher>,
+    pub new_teacher: Teacher,
     pub old_teacher: Teacher,
     pub message: String,
     pub kind: EntryKind,
-    pub room: Option<Room>,
+    pub room: Room,
 }
 
 impl Entry {
@@ -814,13 +748,13 @@ impl Entry {
         Self {
             name: String::new(),
             course: Course::new(),
-            old_course: None,
+            old_course: Course::new(),
             time: Duration::new(),
-            new_teacher: None,
+            new_teacher: Teacher::new(),
             old_teacher: Teacher::new(),
             message: String::new(),
             kind: EntryKind::new(),
-            room: None,
+            room: Room::None,
         }
     }
 
@@ -831,7 +765,7 @@ impl Entry {
     }
 }
 
-#[derive(Debug)]
+/* #[derive(Debug)]
 pub struct Course {
     pub name: String,
 }
@@ -843,7 +777,7 @@ impl Course {
             name: String::new(),
         }
     }
-}
+} */
 
 // FIXME: Copy of str::escape_default from std, which is currently unstable
 pub fn escape_default(s: &str) -> String {

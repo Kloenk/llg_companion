@@ -1,5 +1,8 @@
 //! llgCompanion parse, web server and calcdav server
 
+/// common data types
+pub mod common;
+
 /// dsb parser, loader and config
 pub mod dsb;
 
