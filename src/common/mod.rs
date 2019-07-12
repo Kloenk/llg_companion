@@ -1,4 +1,6 @@
-#[derive(Debug)]
+use serde::Serialize;
+
+#[derive(Debug, Serialize)]
 pub enum Room {
     None,
     A { room: i16 },
@@ -46,7 +48,7 @@ impl Default for Room {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Teacher {
     pub name: String,
 }
@@ -65,7 +67,7 @@ impl Default for Teacher {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Hour {
     /// room where the period takes place
     pub room: Room,
@@ -118,19 +120,19 @@ impl Default for Hour {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum Course {
     None,
     Sec1 {
         name: String,
     },
     Sec2 {
-        track: u8,
+        track: i16,
         name: String,
         kind: CourseKind,
     },
     Sec2Exam {
-        track: u8,
+        track: i16,
         name: String,
         kind: CourseKind,
     },
@@ -196,11 +198,11 @@ impl Default for Course {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum CourseKind {
     None,
-    GK { number: u8 },
-    LK { number: u8 },
+    GK { number: i16 },
+    LK { number: i16 },
 }
 
 impl CourseKind {
@@ -221,7 +223,7 @@ impl CourseKind {
             );
             return CourseKind::None;
         }
-        let number: u8 = (kind.as_bytes()[2] as u32 - '0' as u32) as u8;
+        let number: i16 = (kind.as_bytes()[2] as u32 - '0' as u32) as i16;
         if kind.starts_with("GK") {
             return CourseKind::GK { number };
         } else if kind.starts_with("LK") {

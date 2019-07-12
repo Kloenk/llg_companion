@@ -111,6 +111,13 @@ fn main() {
                 .takes_value(true)
                 .value_name("ADDRESS"),
         )
+        .arg(
+            Arg::with_name("mongo-uri")
+                .long("storage.uri")
+                .help("set mongodb connection uri")
+                .takes_value(true)
+                .value_name("URI"),
+        )
         .subcommand(
             SubCommand::with_name("completion")
                 .about("create completions")
@@ -299,6 +306,17 @@ fn main() {
             if let Some(delay) = planinfo.get("delay") {
                 if let Some(delay) = delay.as_integer() {
                     conf.planino.delay_hits = std::time::Duration::from_secs(delay as u64);
+                }
+            }
+        }
+    }
+    if let Some(mongo_uri) = &matches.value_of("mongo-uri") {
+        conf.storage.url = mongo_uri.to_string();
+    } else if let Some(config) = &config {
+        if let Some(storage) = config.get("storage") {
+            if let Some(uri) = storage.get("uri") {
+                if let Some(uri) = uri.as_str() {
+                    conf.storage.url = uri.to_string();
                 }
             }
         }

@@ -6,6 +6,9 @@ use reqwest::header;
 pub use super::error::Error;
 #[doc(inline)]
 pub use super::error::Result;
+use super::storage::MongoDB;
+
+use serde::Serialize;
 
 pub use super::common::{Hour, Room, Teacher};
 
@@ -46,18 +49,21 @@ impl Config {
     }
 
     /// start parsing
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, db: MongoDB) -> Result<()> {
         let conf = self.clone();
         std::thread::spawn(move || {
-            conf.run_int();
+            conf.run_int(db);
         });
         Ok(())
     }
 
     /// internal running function
-    fn run_int(mut self) {
+    fn run_int(mut self, db: MongoDB) {
         loop {
-            self.run_get().unwrap();
+            let planinfo = self.run_get().unwrap();
+            db.planinfo_write_table(&planinfo.teachers, "teachers");
+            db.planinfo_write_table(&planinfo.rooms, "room");
+            db.planinfo_write_table(&planinfo.students, "students");
             std::thread::sleep(std::time::Duration::from_secs(86400)); // sleep for one day
         }
     }
@@ -102,6 +108,9 @@ impl Config {
             if let Err(err) = planinfo.parse_str(&body) {
                 eprintln!("Error: Planinfo: pars: {}", err);
                 hits -= 1;
+            }
+            if dbidx >= 20 {
+                hits = 0;
             }
             // wait befor doing next hit
             std::thread::sleep(self.delay_hits);
@@ -186,11 +195,12 @@ fn createTable() -> [[Hour; 12]; 5] {
     ]
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Table {
     pub name: String,
     pub table_a: [[Hour; 12]; 5],
     pub table_b: [[Hour; 12]; 5],
+    pub date: chrono::DateTime<chrono::Utc>,
 }
 
 impl Table {
@@ -205,6 +215,7 @@ impl Default for Table {
             name: String::new(),
             table_a: createTable(),
             table_b: createTable(),
+            date: chrono::Utc::now(),
         }
     }
 }

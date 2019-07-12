@@ -9,8 +9,11 @@ use html5ever::parse_document;
 use html5ever::rcdom::{Handle, Node, NodeData, RcDom};
 use html5ever::tendril::TendrilSink;
 
+use serde::Serialize;
+
 #[doc(inline)]
 pub use super::error::Result;
+use super::storage::MongoDB;
 
 pub use super::common::{Course, Room, Teacher};
 
@@ -47,24 +50,27 @@ impl Config {
     }
 
     /// start parser
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&self, db: MongoDB) -> Result<()> {
         let conf = self.clone();
         thread::spawn(move || {
-            conf.run_int();
+            conf.run_int(db);
         });
         Ok(())
     }
 
     /// internal run function holding the mail loop of the thread
-    fn run_int(self) {
+    fn run_int(self, db: MongoDB) {
         loop {
-            self.get();
-            std::thread::sleep(std::time::Duration::from_secs(600)); //sleep 10 min
+            let dsb = self.get().unwrap();
+            for v in dsb.iter() {
+                db.dsb_write(v).unwrap();
+            }
+            std::thread::sleep(std::time::Duration::from_secs(300)); //sleep 5 min
         }
     }
 
     /// get dsb content
-    fn get(&self) -> Result<()> {
+    fn get(&self) -> Result<Vec<DSB>> {
         let data = self.gen_request_payload()?;
 
         let client = reqwest::Client::new();
@@ -96,10 +102,10 @@ impl Config {
             }
         }
 
-        let html = html.text().unwrap();
-        self.parse(&html);
+        let html = html.text()?;
+        let dsb = self.parse(&html)?;
 
-        Ok(()) // change
+        Ok(dsb) // change
     }
 
     /// create request payload
@@ -409,7 +415,7 @@ impl Config {
                             entrie.time.to = contents[1].parse().unwrap_or(0);
                         } else {
                             let contents = contents.chars().next().unwrap();
-                            let t: u8 = (contents as u32 - '0' as u32) as u8;
+                            let t: i16 = (contents as u32 - '0' as u32) as i16;
                             entrie.time.from = t;
                             entrie.time.to = t;
                         }
@@ -486,7 +492,7 @@ impl Config {
 }
 
 /// enum for A and B week
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum Week {
     A,
     B,
@@ -504,12 +510,12 @@ impl Week {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Class {
     pub name: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct DSB {
     /// school name
     pub school: String,
@@ -686,10 +692,10 @@ pub struct Hour {
     pub duration: chrono::Duration,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Duration {
-    pub from: u8,
-    pub to: u8,
+    pub from: i16,
+    pub to: i16,
 }
 
 impl Duration {
@@ -698,7 +704,7 @@ impl Duration {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum EntryKind {
     Unknow(String),
     Substitution,
@@ -732,7 +738,7 @@ impl EntryKind {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct Entry {
     pub name: String,
     pub course: Course,
@@ -767,20 +773,6 @@ impl Entry {
         entry
     }
 }
-
-/* #[derive(Debug)]
-pub struct Course {
-    pub name: String,
-}
-
-impl Course {
-    /// create new instance
-    pub fn new() -> Self {
-        Self {
-            name: String::new(),
-        }
-    }
-} */
 
 // FIXME: Copy of str::escape_default from std, which is currently unstable
 pub fn escape_default(s: &str) -> String {
