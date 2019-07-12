@@ -87,17 +87,43 @@ impl Hour {
         Default::default()
     }
     pub fn parse_planinfo_teacher(&mut self, input: &str, teacher: &str) {
+        let input = input.trim();
         self.teacher.name = teacher.to_string();
+        self.is_tutor = false;
         if input.is_empty() {
             return;
         }
-        let sClass: u32 = (input.as_bytes()[0] as u32 - '0' as u32) as u32;
-        if sClass > 0 || sClass < 9 {
+        if input.contains("LZ")
+            || input.contains("BS")
+            || input.contains("VBS")
+            || input.contains("UEMI")
+            || input.contains("SPI")
+        {
+            eprintln!("Error: Hour: planInfo_Teacher: no parser for {}", input);
             self.course = Course::Sec1 {
                 name: input.to_string(),
             };
+            return;
         }
-        eprintln!("implement all other parsing function for planinfo_teacher!!!");
+
+        let inVec: Vec<&str> = input.split_ascii_whitespace().collect();
+        if inVec.len() != 3 {
+            eprintln!(
+                "Error: Hour: planInfo_Teacher: vec len not 3 but {}",
+                inVec.len()
+            );
+            return;
+        }
+
+        let sClass: u32 = (input.as_bytes()[0] as u32 - '0' as u32) as u32;
+        if sClass > 0 && sClass < 9 {
+            self.course = Course::Sec1 {
+                name: format!("{} {}", inVec[1], inVec[0]),
+            };
+        } else {
+            self.course = Course::from_planinfo_teacher_str(inVec[0], inVec[1]);
+        }
+        self.room = Room::from_dsb_str(inVec[2].trim());
     }
     pub fn parse_planinfo_room(&mut self, input: &str, room: &str) {
         self.room = Room::from_dsb_str(input);
@@ -167,7 +193,7 @@ impl Course {
         }
 
         let sClass: u32 = (class.as_bytes()[0] as u32 - '0' as u32) as u32;
-        if sClass > 0 || sClass < 9 {
+        if sClass > 0 && sClass < 9 {
             return Course::Sec1 {
                 name: course.to_string(),
             };
@@ -189,6 +215,27 @@ impl Course {
             name,
             kind,
         }
+    }
+    /// parse planinfo teacher string
+    /// this function is indetend to be run after deciding that it is not a Sec 1 course
+    pub fn from_planinfo_teacher_str(course: &str, namein: &str) -> Self {
+        let course = course.trim();
+        let namein = namein.trim();
+        let kind = CourseKind::from_planinfo_teacher_str(namein);
+        let mut track: i16 = 0;
+        if let Some(nr) = course.as_bytes().last() {
+            track = (*nr as u32 - '0' as u32) as i16;
+        }
+        let mut name = String::new();
+        let data: Vec<&str> = namein.split("-").collect();
+        if let Some(data) = data.first() {
+            name = data.to_string() + " ";
+        }
+        let data: Vec<&str> = course.split("-").collect();
+        if let Some(data) = data.first() {
+            name += data;
+        }
+        Course::Sec2 { track, name, kind }
     }
 }
 
@@ -216,14 +263,16 @@ impl CourseKind {
         if kind.is_empty() {
             return CourseKind::None;
         }
-        if kind.len() != 3 {
+        if kind.len() != 3 && kind.len() != 4 {
             eprintln!(
                 "Error: DSB: CourseKind: kind string is not len 3 {{{}}}",
                 kind
             );
             return CourseKind::None;
         }
-        let number: i16 = (kind.as_bytes()[2] as u32 - '0' as u32) as i16;
+        //let number: i16 = (kind.as_bytes()[2] as u32 - '0' as u32) as i16;
+        let number: &str = &kind[2..kind.len()];
+        let number: i16 = number.parse().unwrap_or(0);
         if kind.starts_with("GK") {
             return CourseKind::GK { number };
         } else if kind.starts_with("LK") {
@@ -232,5 +281,20 @@ impl CourseKind {
             eprintln!("Error: DSB: CourseKind: error parsing {{{}}}", kind);
             return CourseKind::None;
         }
+    }
+    /// parse planinfo teacher str
+    pub fn from_planinfo_teacher_str(course: &str) -> Self {
+        let course = course.trim();
+        if course.is_empty() {
+            return CourseKind::None;
+        }
+        let mut number: i16 = 0;
+        if let Some(nr) = course.as_bytes().last() {
+            number = (*nr as u32 - '0' as u32) as i16;
+        }
+        if course.to_lowercase().contains("lk") {
+            return CourseKind::LK { number };
+        }
+        return CourseKind::GK { number };
     }
 }

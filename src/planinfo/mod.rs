@@ -423,6 +423,7 @@ impl PlanInfo {
                                                                     } else if contents
                                                                         .contains("Klasse")
                                                                     {
+                                                                        // FIXME: implement class
                                                                         /* let names: Vec<&str> =
                                                                             contents
                                                                                 .split(" ")
