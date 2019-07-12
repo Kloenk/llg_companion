@@ -84,10 +84,26 @@ impl Hour {
     pub fn new() -> Self {
         Default::default()
     }
-    pub fn parse_planinfo(&mut self, input: &str) {
-        self.course = Course::Sec1 {
-            name: input.to_string(),
-        };
+    pub fn parse_planinfo_teacher(&mut self, input: &str, teacher: &str) {
+        self.teacher.name = teacher.to_string();
+        if input.is_empty() {
+            return;
+        }
+        let sClass: u32 = (input.as_bytes()[0] as u32 - '0' as u32) as u32;
+        if sClass > 0 || sClass < 9 {
+            self.course = Course::Sec1 {
+                name: input.to_string(),
+            };
+        }
+        eprintln!("implement all other parsing function for planinfo_teacher!!!");
+    }
+    pub fn parse_planinfo_room(&mut self, input: &str, room: &str) {
+        self.room = Room::from_dsb_str(input);
+        eprintln!("implement all other parsing function for planinfo_room!!!");
+    }
+    pub fn parse_planinfo_student(&mut self, input: &str, courseString: &str) {
+        self.is_tutor = true;
+        eprintln!("implement all other parsing function for planinfo_room!!!");
     }
 }
 

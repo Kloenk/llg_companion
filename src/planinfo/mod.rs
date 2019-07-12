@@ -83,6 +83,9 @@ impl Config {
 
         while hits > 0 {
             dbidx += 1;
+            if self.verbose >= 3 {
+                println!("Debug3: PlanInfo: hit dbidx {}", dbidx);
+            }
             let mut body: reqwest::Response = client
                 .get(&format!(
                     "{}?ug={}&dbidx={}",
@@ -100,179 +103,108 @@ impl Config {
                 eprintln!("Error: Planinfo: pars: {}", err);
                 hits -= 1;
             }
-
-            // FIXME: remove
-            hits = 0;
             // wait befor doing next hit
             std::thread::sleep(self.delay_hits);
         }
-        println!("Planinfo: {:?}", planinfo);
 
         Ok(planinfo)
     }
 }
 
+fn createTable() -> [[Hour; 12]; 5] {
+    [
+        [
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+        ],
+        [
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+        ],
+        [
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+        ],
+        [
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+        ],
+        [
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+            Hour::new(),
+        ],
+    ]
+}
+
 #[derive(Debug)]
-pub struct TeacherTable {
+pub struct Table {
     pub name: String,
     pub table_a: [[Hour; 12]; 5],
     pub table_b: [[Hour; 12]; 5],
 }
 
-impl TeacherTable {
+impl Table {
     pub fn new() -> Self {
         Default::default()
     }
 }
 
-impl Default for TeacherTable {
+impl Default for Table {
     fn default() -> Self {
         Self {
             name: String::new(),
-            table_a: [
-                [
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                ],
-                [
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                ],
-                [
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                ],
-                [
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                ],
-                [
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                ],
-            ],
-            table_b: [
-                [
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                ],
-                [
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                ],
-                [
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                ],
-                [
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                ],
-                [
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                    Hour::new(),
-                ],
-            ],
+            table_a: createTable(),
+            table_b: createTable(),
         }
     }
 }
@@ -280,7 +212,13 @@ impl Default for TeacherTable {
 #[derive(Debug)]
 pub struct PlanInfo {
     /// teachers in planinfo
-    pub teachers: Vec<TeacherTable>,
+    pub teachers: Vec<Table>,
+
+    /// tables for rooms
+    pub rooms: Vec<Table>,
+
+    /// tables for students
+    pub students: Vec<Table>,
 }
 
 impl PlanInfo {
@@ -288,6 +226,8 @@ impl PlanInfo {
     pub fn new() -> Self {
         Self {
             teachers: Vec::new(),
+            rooms: Vec::new(),
+            students: Vec::new(),
         }
     }
 
@@ -352,6 +292,7 @@ impl PlanInfo {
                     let mut kind = 0;
                     let mut first_run = true;
                     let mut entryName = String::new();
+                    let mut courseString = String::new();
                     for v in v.children.borrow().iter() {
                         let v: &Node = v;
                         if let NodeData::Element { ref name, .. } = v.data {
@@ -407,9 +348,11 @@ impl PlanInfo {
                                                                             entryName =
                                                                                 names.to_string();
                                                                             if first_run {
-                                                                                let mut table = TeacherTable::new();
+                                                                                let mut table =
+                                                                                    Table::new();
                                                                                 table.name =
-                                                                                    entryName;
+                                                                                    entryName
+                                                                                        .clone();
                                                                                 self.teachers
                                                                                     .push(table);
                                                                             }
@@ -419,10 +362,37 @@ impl PlanInfo {
                                                                         .contains("Raum")
                                                                     {
                                                                         kind = 1;
+                                                                        let names: Vec<&str> =
+                                                                            contents
+                                                                                .split(" ")
+                                                                                .collect();
+                                                                        if let Some(names) =
+                                                                            names.last()
+                                                                        {
+                                                                            entryName =
+                                                                                names.to_string();
+                                                                            if first_run {
+                                                                                let mut table =
+                                                                                    Table::new();
+                                                                                table.name =
+                                                                                    entryName
+                                                                                        .clone();
+                                                                                self.rooms
+                                                                                    .push(table);
+                                                                            }
+                                                                        }
                                                                     } else if contents
                                                                         .contains("Schüler/in")
                                                                     {
                                                                         kind = 2;
+                                                                        if first_run {
+                                                                            let mut table =
+                                                                                Table::new();
+                                                                            table.name =
+                                                                                entryName.clone();
+                                                                            self.students
+                                                                                .push(table);
+                                                                        }
                                                                     } else if contents.ends_with(
                                                                         "-Woche-Stundenplan von",
                                                                     ) {
@@ -431,7 +401,35 @@ impl PlanInfo {
                                                                         .starts_with("(")
                                                                         && contents.ends_with(")")
                                                                     {
-                                                                        // name attribut, do nothing
+                                                                        let contents: &str =
+                                                                            contents.trim();
+                                                                        let contents: &str =
+                                                                            contents
+                                                                                .trim_matches('(')
+                                                                                .trim_matches(')');
+                                                                        courseString =
+                                                                            contents.to_string();
+                                                                    } else if contents
+                                                                        .contains("Klasse")
+                                                                    {
+                                                                        /* let names: Vec<&str> =
+                                                                            contents
+                                                                                .split(" ")
+                                                                                .collect();
+                                                                        if let Some(names) =
+                                                                            names.last()
+                                                                        {
+                                                                            entryName =
+                                                                                names.to_string();
+                                                                            if first_run {
+                                                                                let mut table = ClassTable::new();
+                                                                                table.name =
+                                                                                    entryName;
+                                                                                self.classes
+                                                                                    .push(table);
+                                                                            }
+                                                                        } */
+                                                                        kind = 3;
                                                                     } else {
                                                                         eprintln!("Error: PlanInfo: parse_dom_div: unknown kind: {{{}}}", contents);
                                                                         return Err(Error::new_field_not_exists("PlanInfo header kind".to_string()));
@@ -458,7 +456,6 @@ impl PlanInfo {
                                                                                 for attr in attrs.iter() {
                                                                                     let attr: &html5ever::Attribute = attr;
                                                                                     if attr.name.local.to_string() == "title" {
-                                                                                        println!("name-orig: {}", attr.value.to_string());
                                                                                         if kind == 2 {
                                                                                             let name: String = attr.value.to_string();
                                                                                             let name = name.trim_start_matches("Schüler/in ");
@@ -509,22 +506,68 @@ impl PlanInfo {
                                                                     &contents.borrow();
                                                                 let contents = contents.trim();
                                                                 if kind == 0 {
+                                                                    // teachers
                                                                     if let Some(table) =
                                                                         self.teachers.last_mut()
                                                                     {
-                                                                        let table: &mut TeacherTable = table;
+                                                                        let table: &mut Table =
+                                                                            table;
                                                                         if A {
-                                                                            table.table_a[y][x]
-                                                                                .parse_planinfo(
-                                                                                    contents,
+                                                                            table.table_a[x][y]
+                                                                                .parse_planinfo_teacher(
+                                                                                    contents, &entryName
                                                                                 );
                                                                         } else {
-                                                                            table.table_b[y][x]
-                                                                                .parse_planinfo(
-                                                                                    contents,
+                                                                            table.table_b[x][y]
+                                                                                .parse_planinfo_teacher(
+                                                                                    contents, &entryName
                                                                                 );
                                                                         }
                                                                     }
+                                                                } else if kind == 1 {
+                                                                    // Room
+                                                                    if let Some(table) =
+                                                                        self.rooms.last_mut()
+                                                                    {
+                                                                        let table: &mut Table =
+                                                                            table;
+                                                                        if A {
+                                                                            table.table_a[x][y].parse_planinfo_room(contents, &entryName);
+                                                                        } else {
+                                                                            table.table_b[x][y].parse_planinfo_room(contents, &entryName);
+                                                                        }
+                                                                    }
+                                                                } else if kind == 2 {
+                                                                    // student
+                                                                    if let Some(table) =
+                                                                        self.students.last_mut()
+                                                                    {
+                                                                        let table: &mut Table =
+                                                                            table;
+                                                                        if A {
+                                                                            table.table_a[x][y].parse_planinfo_student(contents, &courseString);
+                                                                        } else {
+                                                                            table.table_b[x][y].parse_planinfo_student(contents, &courseString);
+                                                                        }
+                                                                    }
+                                                                } else if kind == 3 {
+                                                                    // Class
+                                                                    /*if let Some(table) = self.classes.last_mut() {
+                                                                        let table: &mut ClassTable = table;
+                                                                        if A {
+                                                                            table.table_a[x][y].parse_planinfo(contents)
+                                                                        }
+                                                                    }*/
+                                                                    eprintln!("Error: PlanInfo: parser class parser not implemented");
+                                                                } else {
+                                                                    return Err(
+                                                                        Error::new_field_not_exists(
+                                                                            format!(
+                                                                                "kind: {}",
+                                                                                kind
+                                                                            ),
+                                                                        ),
+                                                                    );
                                                                 }
                                                             }
                                                         }
