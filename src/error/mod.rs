@@ -134,6 +134,14 @@ impl std::convert::From<base64::DecodeError> for Error {
     }
 }
 
+impl std::convert::From<mongodb::error::Error> for Error {
+    fn from(err: mongodb::error::Error) -> Self {
+        Self {
+            my_kind: ErrorKind::Other(err.description().to_string()),
+        }
+    }
+}
+
 /// implement std::cmp::PartialEq for Error to provied the `==` operator
 impl std::cmp::PartialEq for Error {
     fn eq(&self, other: &Error) -> bool {

@@ -74,6 +74,34 @@ fn main() {
                 .value_name("COOKIE"),
         )
         .arg(
+            Arg::with_name("planinfo.max_misses")
+                .long("planinfo.misses")
+                .help("set max planinfo misses befor marking scan as completed")
+                .takes_value(true)
+                .value_name("COUNT"),
+        )
+        .arg(
+            Arg::with_name("planinfo.hit_delay")
+                .long("planinfo.delay")
+                .help("set delay between planinfo requests")
+                .takes_value(true)
+                .value_name("SECONDS"),
+        )
+        .arg(
+            Arg::with_name("planinfo.start")
+                .long("planinfo.start")
+                .help("where to start in planinfo (-1)")
+                .takes_value(true)
+                .value_name("INDEX"),
+        )
+        .arg(
+            Arg::with_name("planinfo.end")
+                .long("planinfo.end")
+                .help("where to end in planinfo (if value < that planinfo.start no end)")
+                .takes_value(true)
+                .value_name("INDEX"),
+        )
+        .arg(
             Arg::with_name("impressum")
                 .long("impressum")
                 .short("i")
@@ -96,6 +124,13 @@ fn main() {
                 .help("set interface to listen on")
                 .takes_value(true)
                 .value_name("ADDRESS"),
+        )
+        .arg(
+            Arg::with_name("mongo-uri")
+                .long("storage.uri")
+                .help("set mongodb connection uri")
+                .takes_value(true)
+                .value_name("URI"),
         )
         .subcommand(
             SubCommand::with_name("completion")
@@ -254,9 +289,73 @@ fn main() {
         conf.planino.cookies = cookie.to_string();
     } else if let Some(config) = &config {
         if let Some(planinfo) = config.get("planinfo") {
-            if let Some(cookie) = planinfo.get("url") {
+            if let Some(cookie) = planinfo.get("cookie") {
                 if let Some(cookie) = cookie.as_str() {
                     conf.planino.cookies = cookie.to_string();
+                }
+            }
+        }
+    }
+
+    if let Some(max_misses) = &matches.value_of("planinfo.max_misses") {
+        conf.planino.max_misses = max_misses.parse().unwrap_or(conf.planino.max_misses);
+    } else if let Some(config) = &config {
+        if let Some(planinfo) = config.get("planinfo") {
+            if let Some(misses) = planinfo.get("misses") {
+                if let Some(misses) = misses.as_integer() {
+                    conf.planino.max_misses = misses as usize;
+                }
+            }
+        }
+    }
+
+    if let Some(hit_delay) = &matches.value_of("planinfo.hit_delay") {
+        conf.planino.delay_hits = std::time::Duration::from_secs(
+            hit_delay
+                .parse()
+                .unwrap_or(conf.planino.delay_hits.as_secs()),
+        );
+    } else if let Some(config) = &config {
+        if let Some(planinfo) = config.get("planinfo") {
+            if let Some(delay) = planinfo.get("delay") {
+                if let Some(delay) = delay.as_integer() {
+                    conf.planino.delay_hits = std::time::Duration::from_secs(delay as u64);
+                }
+            }
+        }
+    }
+
+    if let Some(start) = &matches.value_of("planinfo.start") {
+        conf.planino.start = start.parse().unwrap_or(conf.planino.start);
+    } else if let Some(config) = &config {
+        if let Some(planinfo) = config.get("planinfo") {
+            if let Some(start) = planinfo.get("start") {
+                if let Some(start) = start.as_integer() {
+                    conf.planino.start = start as usize;
+                }
+            }
+        }
+    }
+
+    if let Some(end) = &matches.value_of("planinfo.end") {
+        conf.planino.end = end.parse().unwrap_or(conf.planino.end);
+    } else if let Some(config) = &config {
+        if let Some(planinfo) = config.get("planinfo") {
+            if let Some(end) = planinfo.get("end") {
+                if let Some(end) = end.as_integer() {
+                    conf.planino.end = end as usize;
+                }
+            }
+        }
+    }
+
+    if let Some(mongo_uri) = &matches.value_of("mongo-uri") {
+        conf.storage.url = mongo_uri.to_string();
+    } else if let Some(config) = &config {
+        if let Some(storage) = config.get("storage") {
+            if let Some(uri) = storage.get("uri") {
+                if let Some(uri) = uri.as_str() {
+                    conf.storage.url = uri.to_string();
                 }
             }
         }

@@ -15,6 +15,9 @@ pub mod error;
 /// http server
 pub mod server;
 
+/// storage backend
+pub mod storage;
+
 #[doc(inline)]
 pub use error::Result;
 
@@ -26,6 +29,9 @@ pub struct Config {
 
     /// config for planinfo parser
     pub planino: planinfo::Config,
+
+    /// config for storage
+    pub storage: storage::Config,
 
     /// url to impressum of host
     pub impressum: String,
@@ -44,6 +50,7 @@ impl Config {
             verbose: 0,
             dsb: dsb::Config::new(),
             planino: planinfo::Config::new(),
+            storage: storage::Config::new(),
             impressum: String::from("localhost"),
             port: 8080,
             address: String::from("0.0.0.0"),
@@ -54,7 +61,11 @@ impl Config {
     pub fn run(&self) -> Result<()> {
         println!("llgCompanion: {}", env!("CARGO_PKG_VERSION"));
 
-        self.dsb.run()?;
+        let mongo = self.storage.connect()?;
+
+        self.dsb.run(mongo.clone())?;
+
+        self.planino.run(mongo.clone())?;
 
         // run server
         let server = server::Server::new(&self);
