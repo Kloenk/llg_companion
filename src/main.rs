@@ -88,6 +88,20 @@ fn main() {
                 .value_name("SECONDS"),
         )
         .arg(
+            Arg::with_name("planinfo.start")
+                .long("planinfo.start")
+                .help("where to start in planinfo (-1)")
+                .takes_value(true)
+                .value_name("INDEX"),
+        )
+        .arg(
+            Arg::with_name("planinfo.end")
+                .long("planinfo.end")
+                .help("where to end in planinfo (if value < that planinfo.start no end)")
+                .takes_value(true)
+                .value_name("INDEX"),
+        )
+        .arg(
             Arg::with_name("impressum")
                 .long("impressum")
                 .short("i")
@@ -300,7 +314,7 @@ fn main() {
             hit_delay
                 .parse()
                 .unwrap_or(conf.planino.delay_hits.as_secs()),
-        )
+        );
     } else if let Some(config) = &config {
         if let Some(planinfo) = config.get("planinfo") {
             if let Some(delay) = planinfo.get("delay") {
@@ -310,6 +324,31 @@ fn main() {
             }
         }
     }
+
+    if let Some(start) = &matches.value_of("planinfo.start") {
+        conf.planino.start = start.parse().unwrap_or(conf.planino.start);
+    } else if let Some(config) = &config {
+        if let Some(planinfo) = config.get("planinfo") {
+            if let Some(start) = planinfo.get("start") {
+                if let Some(start) = start.as_integer() {
+                    conf.planino.start = start as usize;
+                }
+            }
+        }
+    }
+
+    if let Some(end) = &matches.value_of("planinfo.end") {
+        conf.planino.end = end.parse().unwrap_or(conf.planino.end);
+    } else if let Some(config) = &config {
+        if let Some(planinfo) = config.get("planinfo") {
+            if let Some(end) = planinfo.get("end") {
+                if let Some(end) = end.as_integer() {
+                    conf.planino.end = end as usize;
+                }
+            }
+        }
+    }
+
     if let Some(mongo_uri) = &matches.value_of("mongo-uri") {
         conf.storage.url = mongo_uri.to_string();
     } else if let Some(config) = &config {

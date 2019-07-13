@@ -31,6 +31,13 @@ pub struct Config {
     /// max times of miss
     pub max_misses: usize,
 
+    /// where to start in the database
+    /// this value is 1 less than the actual value
+    pub start: usize,
+
+    /// where to end
+    pub end: usize,
+
     /// verbose level
     pub verbose: u8,
 }
@@ -44,6 +51,8 @@ impl Config {
             cookies: String::new(),
             delay_hits: std::time::Duration::from_secs(20),
             max_misses: 5,
+            start: 0,
+            end: 0,
             verbose: 0,
         }
     }
@@ -60,19 +69,16 @@ impl Config {
     /// internal running function
     fn run_int(mut self, db: MongoDB) {
         loop {
-            let planinfo = self.run_get().unwrap();
-            db.planinfo_write_table(&planinfo.teachers, "teachers");
-            db.planinfo_write_table(&planinfo.rooms, "room");
-            db.planinfo_write_table(&planinfo.students, "students");
+            let planinfo = self.run_get(db.clone()).unwrap();
             std::thread::sleep(std::time::Duration::from_secs(86400)); // sleep for one day
         }
     }
 
     /// redownload page
-    fn run_get(&self) -> Result<PlanInfo> {
+    fn run_get(&self, db: MongoDB) -> Result<PlanInfo> {
         let mut planinfo = PlanInfo::new();
         let mut hits = self.max_misses;
-        let mut dbidx: usize = 0;
+        let mut dbidx: usize = self.start;
 
         // build client for http
         let mut headers = header::HeaderMap::new();
@@ -102,14 +108,17 @@ impl Config {
             if !body.status().is_success() {
                 eprintln!("Error: PlanInfo: GET: {}", body.status());
                 hits -= 1;
-                continue;
+            } else {
+                let body: String = body.text()?;
+                let ret = planinfo.parse_str(&body);
+                if let Err(err) = ret {
+                    eprintln!("Error: Planinfo: pars: {}", err);
+                    hits -= 1;
+                } else if let Ok((table, kind)) = ret {
+                    db.planinfo_write_table(&table, &kind);
+                }
             }
-            let body: String = body.text()?;
-            if let Err(err) = planinfo.parse_str(&body) {
-                eprintln!("Error: Planinfo: pars: {}", err);
-                hits -= 1;
-            }
-            if dbidx >= 20 {
+            if dbidx == self.end {
                 hits = 0;
             }
             // wait befor doing next hit
@@ -195,12 +204,12 @@ fn createTable() -> [[Hour; 12]; 5] {
     ]
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Table {
     pub name: String,
     pub table_a: [[Hour; 12]; 5],
     pub table_b: [[Hour; 12]; 5],
-    pub date: chrono::DateTime<chrono::Utc>,
+    //pub date: chrono::DateTime<chrono::Utc>,
 }
 
 impl Table {
@@ -215,7 +224,7 @@ impl Default for Table {
             name: String::new(),
             table_a: createTable(),
             table_b: createTable(),
-            date: chrono::Utc::now(),
+            //date: chrono::Utc::now(),
         }
     }
 }
@@ -243,7 +252,7 @@ impl PlanInfo {
     }
 
     /// parse string into PlanInfo
-    pub fn parse_str(&mut self, html: &str) -> Result<()> {
+    pub fn parse_str(&mut self, html: &str) -> Result<(Table, String)> {
         let html = html.replace("&nbsp;", " ");
         let html = html.trim();
         let dom = parse_document(RcDom::default(), Default::default())
@@ -253,7 +262,7 @@ impl PlanInfo {
     }
 
     /// parse RcDom into PlanInfo
-    pub fn parse_dom(&mut self, handle: &Handle) -> Result<()> {
+    pub fn parse_dom(&mut self, handle: &Handle) -> Result<(Table, String)> {
         let node: &Node = handle;
         let node: &Node = &node.children.borrow()[1];
         if node.children.borrow().len() < 2 {
@@ -288,11 +297,14 @@ impl PlanInfo {
                 }
             }
         }
-        Ok(())
+        Err(Error::new_field_not_exists(
+            "not found for parse_dom (planinfo)".to_string(),
+        ))
     }
 
     /// parse PlanInfo plan div content
-    fn parse_dom_div(&mut self, node: &Node) -> Result<()> {
+    fn parse_dom_div(&mut self, node: &Node) -> Result<(Table, String)> {
+        let mut kind = 0;
         let node: &Node = node;
         for v in node.children.borrow().iter() {
             let v: &Node = v;
@@ -300,7 +312,6 @@ impl PlanInfo {
                 let name: &html5ever::QualName = name;
                 if name.local.to_string() == "table" {
                     let mut A = true;
-                    let mut kind = 0;
                     let mut first_run = true;
                     let mut entryName = String::new();
                     let mut courseString = String::new();
@@ -556,6 +567,8 @@ impl PlanInfo {
                                                                     {
                                                                         let table: &mut Table =
                                                                             table;
+                                                                        table.name =
+                                                                            entryName.clone();
                                                                         if A {
                                                                             table.table_a[x][y].parse_planinfo_student(contents, &courseString);
                                                                         } else {
@@ -597,7 +610,28 @@ impl PlanInfo {
                 }
             }
         }
-        Ok(())
+        let mut table: Table = Table::default();
+        let mut kindString = String::from("none");
+        if kind == 0 {
+            //teachers
+            if let Some(teacher) = self.teachers.last() {
+                table = teacher.clone();
+                kindString = "teachers".to_string();
+            }
+        } else if kind == 1 {
+            // room
+            if let Some(room) = self.rooms.last() {
+                table = room.clone();
+                kindString = "room".to_string();
+            }
+        } else if kind == 2 {
+            // student
+            if let Some(student) = self.students.last() {
+                table = student.clone();
+                kindString = "students".to_string();
+            }
+        }
+        Ok((table.clone(), kindString))
     }
 
     /// test if auth was successfully

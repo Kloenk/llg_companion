@@ -99,19 +99,22 @@ impl MongoDBInner {
 
     pub fn planinfo_write_table(
         &self,
-        tables: &Vec<super::planinfo::Table>,
+        table: &super::planinfo::Table,
         collection: &str,
-    ) -> Result<mongodb::coll::results::InsertManyResult> {
-        let mut bsonVec: Vec<mongodb::Document> = Vec::new();
-        for v in tables.iter() {
-            let bson = mongodb::to_bson(v.clone()).unwrap();
-            let bson = bson.as_document().unwrap();
-            bsonVec.push(bson.clone());
-        }
-        let ret = self
+    ) -> Result<()> {
+        let bson = mongodb::to_bson(table).unwrap();
+        let bson = bson.as_document().unwrap();
+        let in_cache = self
             .db()
             .collection(collection)
-            .insert_many(bsonVec, None)?;
-        Ok(ret)
+            .find_one(Some(bson.clone()), None)
+            .unwrap();
+        if in_cache == None {
+            let ret = self
+                .db()
+                .collection(collection)
+                .insert_one(bson.clone(), None)?;
+        }
+        Ok(())
     }
 }

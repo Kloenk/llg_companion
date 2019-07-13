@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub enum Room {
     None,
     A { room: i16 },
@@ -48,7 +48,7 @@ impl Default for Room {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Teacher {
     pub name: String,
 }
@@ -67,7 +67,7 @@ impl Default for Teacher {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Hour {
     /// room where the period takes place
     pub room: Room,
@@ -98,6 +98,7 @@ impl Hour {
             || input.contains("VBS")
             || input.contains("UEMI")
             || input.contains("SPI")
+            || input.contains("AG")
         {
             eprintln!("Error: Hour: planInfo_Teacher: no parser for {}", input);
             self.course = Course::Sec1 {
@@ -126,12 +127,60 @@ impl Hour {
         self.room = Room::from_dsb_str(inVec[2].trim());
     }
     pub fn parse_planinfo_room(&mut self, input: &str, room: &str) {
+        let input = input.trim();
+        let room = room.trim();
+        self.is_tutor = false;
+        if input.contains("LZ")
+            || input.contains("BS")
+            || input.contains("VBS")
+            || input.contains("UEMI")
+            || input.contains("SPI")
+            || input.contains("AG")
+        {
+            eprintln!("Error: Hour: planInfo_Room: no parser for {}", input);
+            self.course = Course::Sec1 {
+                name: input.to_string(),
+            };
+            return;
+        }
+
         self.room = Room::from_dsb_str(input);
-        eprintln!("implement all other parsing function for planinfo_room!!!");
+
+        let inVec: Vec<&str> = input.split_ascii_whitespace().collect();
+        if inVec.len() != 3 {
+            eprintln!(
+                "Error: Hour: planInfo_Room: vec len not 3 but {}",
+                inVec.len()
+            );
+            return;
+        }
+
+        let sClass: u32 = (input.as_bytes()[0] as u32 - '0' as u32) as u32;
+        if sClass > 0 && sClass < 9 {
+            self.course = Course::Sec1 {
+                name: format!("{} {}", inVec[1], inVec[0]),
+            };
+        } else {
+            self.course = Course::from_planinfo_room_str(inVec[0], inVec[1]);
+        }
     }
     pub fn parse_planinfo_student(&mut self, input: &str, courseString: &str) {
-        self.is_tutor = true;
-        eprintln!("implement all other parsing function for planinfo_room!!!");
+        let input = input.trim();
+        let courseString = courseString.trim();
+
+        let inVec: Vec<&str> = input.split_ascii_whitespace().collect();
+        if inVec.len() != 4 {
+            eprintln!(
+                "Error: Hour: planInfo_Student: vec len not 4 but {}",
+                inVec.len()
+            );
+            return;
+        }
+        self.room = Room::from_dsb_str(inVec[3]);
+
+        self.teacher.name = inVec[2].to_string();
+        self.is_tutor = courseString.contains(&self.teacher.name);
+        self.course = Course::from_planinfo_students_str(inVec[0], inVec[1]);
     }
 }
 
@@ -146,7 +195,7 @@ impl Default for Hour {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub enum Course {
     None,
     Sec1 {
@@ -237,6 +286,42 @@ impl Course {
         }
         Course::Sec2 { track, name, kind }
     }
+    /// parse planinfo teacher string
+    /// this function is indetend to be run after deciding that it is not a Sec 1 course
+    pub fn from_planinfo_room_str(course: &str, namein: &str) -> Self {
+        let course = course.trim();
+        let namein = namein.trim();
+        let kind = CourseKind::from_planinfo_teacher_str(namein);
+        let track = 0;
+        let mut name = String::new();
+        let data: Vec<&str> = namein.split("-").collect();
+        if let Some(data) = data.first() {
+            name = data.to_string() + " ";
+        }
+        let data: Vec<&str> = course.split("-").collect();
+        if let Some(data) = data.first() {
+            name += data;
+        }
+        Course::Sec2 { track, name, kind }
+    }
+    /// parse planinfo teacher string
+    /// this function is indetend to be run after deciding that it is not a Sec 1 course
+    pub fn from_planinfo_students_str(course: &str, namein: &str) -> Self {
+        let course = course.trim();
+        let namein = namein.trim();
+        let kind = CourseKind::from_planinfo_teacher_str(namein);
+        let mut track: i16 = 0;
+        let course = course.trim_matches('(');
+        let course = course.trim_matches(')');
+        if let Some(nr) = course.as_bytes().last() {
+            track = (*nr as u32 - '0' as u32) as i16;
+        }
+
+        let namein: Vec<&str> = namein.split('-').collect();
+        let name = namein[0].to_string();
+
+        Course::Sec2 { track, name, kind }
+    }
 }
 
 impl Default for Course {
@@ -245,7 +330,7 @@ impl Default for Course {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub enum CourseKind {
     None,
     GK { number: i16 },
