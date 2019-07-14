@@ -1,5 +1,13 @@
 //! llgCompanion parse, web server and calcdav server
 
+
+#![feature(proc_macro_hygiene, decl_macro)]
+
+
+#[macro_use] extern crate rocket;
+#[macro_use] extern crate rocket_contrib;
+
+
 /// common data types
 pub mod common;
 
@@ -11,9 +19,6 @@ pub mod planinfo;
 
 /// error structs
 pub mod error;
-
-/// http server
-pub mod server;
 
 /// storage backend
 pub mod storage;
@@ -67,10 +72,41 @@ impl Config {
 
         self.planino.run(mongo.clone())?;
 
-        // run server
-        let server = server::Server::new(&self);
-        server.run();
 
+
+        // rocket foo
+        use std::collections::HashMap;
+        let mut database_config = HashMap::new();
+        let mut databases = HashMap::new();
+
+        use rocket::config::{Config, Environment, Value};
+
+        // This is the same as the following TOML:
+        // my_db = { url = "database.sqlite" }
+        database_config.insert("url", Value::from(format!("mongodb://{}/", self.storage.url)));
+        databases.insert("llg_mongo", Value::from(database_config));
+
+
+        let config = Config::build(Environment::Staging)
+            .address(&self.address)
+            .port(self.port)
+            .extra("databases", databases)
+            .finalize().unwrap();
+
+        rocket::custom(config)
+            .mount("/", routes![index])
+            .attach(DbConn::fairing())
+            .launch();
         Ok(())
     }
+}
+
+
+#[database("llg_mongo")]
+pub struct DbConn(mongodb::db::Database);
+
+
+#[get("/")]
+fn index() -> &'static str {
+    "Hello, world!"
 }
