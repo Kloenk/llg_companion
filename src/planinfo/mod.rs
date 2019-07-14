@@ -110,7 +110,7 @@ impl Config {
                 hits -= 1;
             } else {
                 let body: String = body.text()?;
-                let ret = planinfo.parse_str(&body);
+                let ret = planinfo.parse_str(&body, self.verbose);
                 if let Err(err) = ret {
                     eprintln!("Error: Planinfo: pars: {}", err);
                     hits -= 1;
@@ -252,17 +252,17 @@ impl PlanInfo {
     }
 
     /// parse string into PlanInfo
-    pub fn parse_str(&mut self, html: &str) -> Result<(Table, String)> {
+    pub fn parse_str(&mut self, html: &str, verbose: u8) -> Result<(Table, String)> {
         let html = html.replace("&nbsp;", " ");
         let html = html.trim();
         let dom = parse_document(RcDom::default(), Default::default())
             .from_utf8()
             .read_from(&mut html.as_bytes())?;
-        self.parse_dom(&dom.document)
+        self.parse_dom(&dom.document, verbose)
     }
 
     /// parse RcDom into PlanInfo
-    pub fn parse_dom(&mut self, handle: &Handle) -> Result<(Table, String)> {
+    pub fn parse_dom(&mut self, handle: &Handle, verbose: u8) -> Result<(Table, String)> {
         let node: &Node = handle;
         let node: &Node = &node.children.borrow()[1];
         if node.children.borrow().len() < 2 {
@@ -291,7 +291,7 @@ impl PlanInfo {
                         if attr.name.local.to_string() == "class"
                             && attr.value.to_string() == "plan"
                         {
-                            return self.parse_dom_div(v);
+                            return self.parse_dom_div(v, verbose);
                         }
                     }
                 }
@@ -303,7 +303,7 @@ impl PlanInfo {
     }
 
     /// parse PlanInfo plan div content
-    fn parse_dom_div(&mut self, node: &Node) -> Result<(Table, String)> {
+    fn parse_dom_div(&mut self, node: &Node, verbose: u8) -> Result<(Table, String)> {
         let mut kind = 0;
         let node: &Node = node;
         for v in node.children.borrow().iter() {
@@ -489,7 +489,9 @@ impl PlanInfo {
                                                                                             if let Some(course) = name.last() {
                                                                                                 let course: &str = course.trim();
                                                                                                 let course: &str = course.trim_matches(')');
-                                                                                                eprintln!("Error: PlanInfo: not implemented: parse course from header: {{{}}}", course);
+                                                                                                if verbose >= 1 {
+                                                                                                    eprintln!("Error1: PlanInfo: not implemented: parse course from header: {{{}}}", course);
+                                                                                                }
                                                                                             }
                                                                                         }
                                                                                     }
@@ -538,12 +540,12 @@ impl PlanInfo {
                                                                         if A {
                                                                             table.table_a[x][y]
                                                                                 .parse_planinfo_teacher(
-                                                                                    contents, &entryName
+                                                                                    contents, &entryName, verbose
                                                                                 );
                                                                         } else {
                                                                             table.table_b[x][y]
                                                                                 .parse_planinfo_teacher(
-                                                                                    contents, &entryName
+                                                                                    contents, &entryName, verbose
                                                                                 );
                                                                         }
                                                                     }
@@ -555,9 +557,9 @@ impl PlanInfo {
                                                                         let table: &mut Table =
                                                                             table;
                                                                         if A {
-                                                                            table.table_a[x][y].parse_planinfo_room(contents, &entryName);
+                                                                            table.table_a[x][y].parse_planinfo_room(contents, &entryName, verbose);
                                                                         } else {
-                                                                            table.table_b[x][y].parse_planinfo_room(contents, &entryName);
+                                                                            table.table_b[x][y].parse_planinfo_room(contents, &entryName, verbose);
                                                                         }
                                                                     }
                                                                 } else if kind == 2 {
@@ -570,9 +572,9 @@ impl PlanInfo {
                                                                         table.name =
                                                                             entryName.clone();
                                                                         if A {
-                                                                            table.table_a[x][y].parse_planinfo_student(contents, &courseString);
+                                                                            table.table_a[x][y].parse_planinfo_student(contents, &courseString, verbose);
                                                                         } else {
-                                                                            table.table_b[x][y].parse_planinfo_student(contents, &courseString);
+                                                                            table.table_b[x][y].parse_planinfo_student(contents, &courseString, verbose);
                                                                         }
                                                                     }
                                                                 } else if kind == 3 {
@@ -583,7 +585,9 @@ impl PlanInfo {
                                                                             table.table_a[x][y].parse_planinfo(contents)
                                                                         }
                                                                     }*/
-                                                                    eprintln!("Error: PlanInfo: parser class parser not implemented");
+                                                                    if verbose >= 1 {
+                                                                        eprintln!("Error1: PlanInfo: parser class parser not implemented");
+                                                                    }
                                                                 } else {
                                                                     return Err(
                                                                         Error::new_field_not_exists(

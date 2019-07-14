@@ -1,3 +1,6 @@
+#![feature(proc_macro_hygiene, decl_macro)]
+
+
 #[doc(inline)]
 pub use crate::error::Result;
 
@@ -11,9 +14,8 @@ impl Server {
     }
     /// start server
     pub fn run(&self) -> Result<()> {
-        loop {
-            std::thread::sleep(std::time::Duration::from_secs(999999));
-        }
+        rocket::ignite().mount("/", routes![index]).launch();
         Ok(())
     }
 }
+

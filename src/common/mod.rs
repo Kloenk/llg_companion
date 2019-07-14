@@ -16,9 +16,11 @@ impl Room {
         Default::default()
     }
     /// parse dbs string
-    pub fn from_dsb_str(input: &str) -> Self {
+    pub fn from_dsb_str(input: &str, verbose: u8) -> Self {
         if input.len() != 4 {
-            eprintln!("Error: DSB: Room: from_str: {} not len 4", input);
+            if verbose >= 1 {
+                eprintln!("Error1: DSB: Room: from_str: {} not len 4", input);
+            }
             return Room::None;
         }
 
@@ -36,7 +38,9 @@ impl Room {
         } else if input.to_lowercase().trim().starts_with("e") {
             return Room::E { room };
         } else {
-            eprintln!("Error: DSB: Room: from_str: could not parse {{{}}}", input);
+            if verbose >= 1 {
+                eprintln!("Error1: DSB: Room: from_str: could not parse {{{}}}", input);
+            }
             return Room::None;
         }
     }
@@ -86,7 +90,7 @@ impl Hour {
     pub fn new() -> Self {
         Default::default()
     }
-    pub fn parse_planinfo_teacher(&mut self, input: &str, teacher: &str) {
+    pub fn parse_planinfo_teacher(&mut self, input: &str, teacher: &str, verbose: u8) {
         let input = input.trim();
         self.teacher.name = teacher.to_string();
         self.is_tutor = false;
@@ -100,7 +104,9 @@ impl Hour {
             || input.contains("SPI")
             || input.contains("AG")
         {
-            eprintln!("Error: Hour: planInfo_Teacher: no parser for {}", input);
+            if verbose >= 2 {
+                eprintln!("Error2: Hour: planInfo_Teacher: no parser for {}", input);
+            }
             self.course = Course::Sec1 {
                 name: input.to_string(),
             };
@@ -109,10 +115,12 @@ impl Hour {
 
         let inVec: Vec<&str> = input.split_ascii_whitespace().collect();
         if inVec.len() != 3 {
-            eprintln!(
-                "Error: Hour: planInfo_Teacher: vec len not 3 but {}",
-                inVec.len()
-            );
+            if verbose >= 1 {
+                eprintln!(
+                    "Error1: Hour: planInfo_Teacher: vec len not 3 but {}",
+                    inVec.len()
+                );
+            }
             return;
         }
 
@@ -124,9 +132,9 @@ impl Hour {
         } else {
             self.course = Course::from_planinfo_teacher_str(inVec[0], inVec[1]);
         }
-        self.room = Room::from_dsb_str(inVec[2].trim());
+        self.room = Room::from_dsb_str(inVec[2].trim(), verbose);
     }
-    pub fn parse_planinfo_room(&mut self, input: &str, room: &str) {
+    pub fn parse_planinfo_room(&mut self, input: &str, room: &str, verbose: u8) {
         let input = input.trim();
         let room = room.trim();
         self.is_tutor = false;
@@ -137,21 +145,25 @@ impl Hour {
             || input.contains("SPI")
             || input.contains("AG")
         {
-            eprintln!("Error: Hour: planInfo_Room: no parser for {}", input);
+            if verbose >= 1 {
+                eprintln!("Error1: Hour: planInfo_Room: no parser for {}", input);
+            }
             self.course = Course::Sec1 {
                 name: input.to_string(),
             };
             return;
         }
 
-        self.room = Room::from_dsb_str(input);
+        self.room = Room::from_dsb_str(input, verbose);
 
         let inVec: Vec<&str> = input.split_ascii_whitespace().collect();
         if inVec.len() != 3 {
-            eprintln!(
-                "Error: Hour: planInfo_Room: vec len not 3 but {}",
-                inVec.len()
-            );
+            if verbose >= 1 {
+                eprintln!(
+                    "Error: Hour: planInfo_Room: vec len not 3 but {}",
+                    inVec.len()
+                );
+            }
             return;
         }
 
@@ -164,19 +176,21 @@ impl Hour {
             self.course = Course::from_planinfo_room_str(inVec[0], inVec[1]);
         }
     }
-    pub fn parse_planinfo_student(&mut self, input: &str, courseString: &str) {
+    pub fn parse_planinfo_student(&mut self, input: &str, courseString: &str, verbose: u8) {
         let input = input.trim();
         let courseString = courseString.trim();
 
         let inVec: Vec<&str> = input.split_ascii_whitespace().collect();
         if inVec.len() != 4 {
-            eprintln!(
-                "Error: Hour: planInfo_Student: vec len not 4 but {}",
-                inVec.len()
-            );
+            if verbose >= 1 {
+                eprintln!(
+                    "Error: Hour: planInfo_Student: vec len not 4 but {}",
+                    inVec.len()
+                );
+            }
             return;
         }
-        self.room = Room::from_dsb_str(inVec[3]);
+        self.room = Room::from_dsb_str(inVec[3], verbose);
 
         self.teacher.name = inVec[2].to_string();
         self.is_tutor = courseString.contains(&self.teacher.name);
@@ -219,21 +233,25 @@ impl Course {
         Course::None
     }
     /// parse dsb to Course
-    pub fn from_dsb_str(class: &str, course: &str) -> Self {
+    pub fn from_dsb_str(class: &str, course: &str, verbose: u8) -> Self {
         let course = course.trim().trim_matches('_');
         if course.is_empty() {
             return Course::None;
         }
 
         if class.is_empty() && class.contains("---") {
-            eprintln!(
-                "Error: DSB: Course: could not parse {} (empty string)",
-                class
-            );
+            if verbose >= 1 {
+                eprintln!(
+                    "Error: DSB: Course: could not parse {} (empty string)",
+                    class
+                );
+            }
             return Course::None;
         }
         if class.to_lowercase().contains("klausur") {
-            eprintln!("Error: DSB: Course: could not parse exam: {{{}}}", course);
+            if verbose >= 1 {
+                eprintln!("Error1: DSB: Course: could not parse exam: {{{}}}", course);
+            }
             return Course::Sec2Exam {
                 track: 0,
                 name: String::new(),
@@ -250,14 +268,16 @@ impl Course {
 
         let course: Vec<&str> = course.split("-").collect();
         if course.len() != 2 {
-            eprintln!(
-                "Error: DSB: Course: could not parse {} (wrong number of arguments)",
-                course.connect(" ")
-            );
+            if verbose >= 1 {
+                eprintln!(
+                    "Error: DSB: Course: could not parse {} (wrong number of arguments)",
+                    course.connect(" ")
+                );
+            }
             return Course::None;
         }
         let name = course[0].to_ascii_uppercase();
-        let kind: CourseKind = CourseKind::from_dsb_str(course[1]);
+        let kind: CourseKind = CourseKind::from_dsb_str(course[1], verbose);
 
         Course::Sec2 {
             track: 0,
@@ -343,16 +363,18 @@ impl CourseKind {
         CourseKind::None
     }
     /// parse dsb courseKind string
-    pub fn from_dsb_str(kind: &str) -> Self {
+    pub fn from_dsb_str(kind: &str, verbose: u8) -> Self {
         let kind = kind.trim();
         if kind.is_empty() {
             return CourseKind::None;
         }
         if kind.len() != 3 && kind.len() != 4 {
-            eprintln!(
-                "Error: DSB: CourseKind: kind string is not len 3 {{{}}}",
-                kind
-            );
+            if verbose >= 1 {
+                eprintln!(
+                    "Error1: DSB: CourseKind: kind string is not len 3 {{{}}}",
+                    kind
+                );
+            }
             return CourseKind::None;
         }
         //let number: i16 = (kind.as_bytes()[2] as u32 - '0' as u32) as i16;
@@ -363,7 +385,9 @@ impl CourseKind {
         } else if kind.starts_with("LK") {
             return CourseKind::LK { number };
         } else {
-            eprintln!("Error: DSB: CourseKind: error parsing {{{}}}", kind);
+            if verbose >= 1 {
+                eprintln!("Error1: DSB: CourseKind: error parsing {{{}}}", kind);
+            }
             return CourseKind::None;
         }
     }

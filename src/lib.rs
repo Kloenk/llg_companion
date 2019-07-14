@@ -1,12 +1,11 @@
 //! llgCompanion parse, web server and calcdav server
 
-
 #![feature(proc_macro_hygiene, decl_macro)]
 
-
-#[macro_use] extern crate rocket;
-#[macro_use] extern crate rocket_contrib;
-
+#[macro_use]
+extern crate rocket;
+#[macro_use]
+extern crate rocket_contrib;
 
 /// common data types
 pub mod common;
@@ -72,8 +71,6 @@ impl Config {
 
         self.planino.run(mongo.clone())?;
 
-
-
         // rocket foo
         use std::collections::HashMap;
         let mut database_config = HashMap::new();
@@ -83,15 +80,18 @@ impl Config {
 
         // This is the same as the following TOML:
         // my_db = { url = "database.sqlite" }
-        database_config.insert("url", Value::from(format!("mongodb://{}/", self.storage.url)));
+        database_config.insert(
+            "url",
+            Value::from(format!("mongodb://{}/", self.storage.url)),
+        );
         databases.insert("llg_mongo", Value::from(database_config));
-
 
         let config = Config::build(Environment::Staging)
             .address(&self.address)
             .port(self.port)
             .extra("databases", databases)
-            .finalize().unwrap();
+            .finalize()
+            .unwrap();
 
         rocket::custom(config)
             .mount("/", routes![index])
@@ -101,10 +101,8 @@ impl Config {
     }
 }
 
-
 #[database("llg_mongo")]
 pub struct DbConn(mongodb::db::Database);
-
 
 #[get("/")]
 fn index() -> &'static str {

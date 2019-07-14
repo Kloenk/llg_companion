@@ -103,7 +103,7 @@ impl Config {
         }
 
         let html = html.text()?;
-        let dsb = self.parse(&html)?;
+        let dsb = self.parse(&html, self.verbose)?;
 
         Ok(dsb) // change
     }
@@ -312,18 +312,18 @@ impl Config {
     }
 
     /// parse dsb content
-    fn parse(&self, html: &str) -> Result<Vec<DSB>> {
+    fn parse(&self, html: &str, verbose: u8) -> Result<Vec<DSB>> {
         //let mut html = html.to_string();
         let html = html.replace("&nbsp;", " ");
         let dom = parse_document(RcDom::default(), Default::default())
             .from_utf8()
             .read_from(&mut html.as_bytes())
             .unwrap();
-        let dsb = self.parse_dom(&dom.document).unwrap();
+        let dsb = self.parse_dom(&dom.document, verbose).unwrap();
         Ok(dsb)
     }
 
-    fn parse_dom(&self, handle: &Handle) -> Result<Vec<DSB>> {
+    fn parse_dom(&self, handle: &Handle, verbose: u8) -> Result<Vec<DSB>> {
         let mut dsb_return: Vec<DSB> = Vec::new();
         let node: &Node = handle;
         let nodeVec = node.children.borrow();
@@ -358,7 +358,7 @@ impl Config {
                             } else if name.local.to_string() == "center" && found_mod_head {
                                 if let Some(dsb) = dsb_return.last_mut() {
                                     let dsb: &mut DSB = dsb;
-                                    self.parse_center(w, dsb);
+                                    self.parse_center(w, dsb, verbose);
                                 }
                                 found_mod_head = false;
                             }
@@ -372,7 +372,7 @@ impl Config {
     }
 
     /// parse dsb center
-    fn parse_center(&self, node: &Node, dsb: &mut DSB) {
+    fn parse_center(&self, node: &Node, dsb: &mut DSB, verbose: u8) {
         let mon_title: &Node = &node.children.borrow()[1];
         let mon_title: &Node = &mon_title.children.borrow()[0];
         if let NodeData::Text { ref contents } = mon_title.data {
@@ -381,7 +381,7 @@ impl Config {
         }
 
         let info: &Node = &node.children.borrow()[3];
-        dsb.parse_info_table(info);
+        dsb.parse_info_table(info, verbose);
 
         let rows: &Node = &node.children.borrow()[5];
         let rows: &Node = &rows.children.borrow()[1];
@@ -434,15 +434,21 @@ impl Config {
                     let course: &Node = &course.children.borrow()[0];
                     if let NodeData::Text { ref contents } = course.data {
                         let contents = escape_default(&contents.borrow());
-                        entrie.course =
-                            Course::from_dsb_str(&entrie.name, contents.trim().trim_matches('-'));
+                        entrie.course = Course::from_dsb_str(
+                            &entrie.name,
+                            contents.trim().trim_matches('-'),
+                            verbose,
+                        );
                     }
                     let course: &Node = &v.children.borrow()[4];
                     let course: &Node = &course.children.borrow()[0];
                     if let NodeData::Text { ref contents } = course.data {
                         let contents = escape_default(&contents.borrow());
-                        entrie.old_course =
-                            Course::from_dsb_str(&entrie.name, contents.trim().trim_matches('-'));
+                        entrie.old_course = Course::from_dsb_str(
+                            &entrie.name,
+                            contents.trim().trim_matches('-'),
+                            verbose,
+                        );
                     }
                     let message: &Node = &v.children.borrow()[5];
                     let message: &Node = &message.children.borrow()[0];
@@ -470,7 +476,7 @@ impl Config {
                             .trim_matches('-')
                             .to_string();
                         if !room.is_empty() {
-                            entrie.room = Room::from_dsb_str(&room);
+                            entrie.room = Room::from_dsb_str(&room, verbose);
                         }
                     }
                 } else {
@@ -631,7 +637,7 @@ impl DSB {
     }
 
     /// parse info table
-    fn parse_info_table(&mut self, node: &Node) {
+    fn parse_info_table(&mut self, node: &Node, verbose: u8) {
         let node: &Node = &node.children.borrow()[1];
 
         for v in node.children.borrow().iter() {
@@ -660,8 +666,8 @@ impl DSB {
                     for v in contentString.iter() {
                         let v: &str = v.trim();
                         let v: Vec<&str> = v.split(" ").collect();
-                        if v.len() != 1 {
-                            eprintln!("Error: DSB: unimplemented: td.info.{{Abwesende Lehrer}}.len {{{}}} {:?}", v.len(), v);
+                        if v.len() != 1 && verbose >= 1 {
+                            eprintln!("Error1: DSB: unimplemented: td.info.{{Abwesende Lehrer}}.len {{{}}} {:?}", v.len(), v);
                         }
                         self.missing_teachers.push(Teacher {
                             name: v[0].to_string(),
@@ -676,10 +682,12 @@ impl DSB {
                         });
                     }
                 } else {
-                    eprintln!(
-                        "Error: DSB: unimplemented: td.info.{{{}}} {{{}}}",
-                        infoString, contentString
-                    );
+                    if verbose >= 1 {
+                        eprintln!(
+                            "Error1: DSB: unimplemented: td.info.{{{}}} {{{}}}",
+                            infoString, contentString
+                        );
+                    }
                 }
             }
         }
