@@ -1,0 +1,59 @@
+<html lang="de">
+	<head>
+		<meta name=viewport content="width=device-width, initial-scale=1, user-scalable=no"></meta>
+		<meta name="format-detection" content="telephone=no">
+		<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+		<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+		<link rel="mask-icon" href="/safari-pinned-tab.svg" color="#49a34d">
+		<meta name="msapplication-TileColor" content="#00a300">
+		<meta name="theme-color" content="#ffffff">
+		<title>LLG Companion Login</title>
+        <style>__INLINE_CSS</style>
+        <style>
+/* Full-width input fields */
+input[type=text], input[type=password] {
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+/* Set a style for all buttons */
+button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+}
+/* Change styles for span and cancel button on extra small screens */
+@media screen and (max-width: 300px) {
+    span.psw {
+        display: block;
+        float: none;
+    }
+}
+
+span.psw {
+  float: right;
+  padding-top: 16px;
+}
+  </style>
+	</head>
+    <body class="nd">
+        <form class="modal-content animate" action="/action_page.php">
+            <div class="container">
+            <label for="uname"><b>Username</b></label>
+            <input type="text" placeholder="Enter Username" name="uname" required>
+
+            <label for="psw"><b>Password</b></label>
+            <input type="password" placeholder="Enter Password" name="psw" required>
+        
+            <button type="submit">Login</button>
+        </form>
+	</body>
+</html>

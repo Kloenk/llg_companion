@@ -132,6 +132,21 @@ fn main() {
                 .takes_value(true)
                 .value_name("URI"),
         )
+        .arg(
+            Arg::with_name("secret")
+                .long("secret")
+                .help("set secret key (256 bit base64 encoded)")
+                .takes_value(true)
+                .value_name("KEY")
+        )
+        .arg(
+            Arg::with_name("assets")
+                .long("assets")
+                .short("d")
+                .help("set assets directory")
+                .takes_value(true)
+                .value_name("DIR")
+        )
         .subcommand(
             SubCommand::with_name("completion")
                 .about("create completions")
@@ -387,6 +402,26 @@ fn main() {
         if let Some(address) = config.get("address") {
             if let Some(address) = address.as_str() {
                 conf.address = address.to_string();
+            }
+        }
+    }
+
+    if let Some(key) = &matches.value_of("secret") {
+        conf.secret = key.to_string();
+    } else if let Some(config) = &config {
+        if let Some(key) = config.get("secret") {
+            if let Some(key) = key.as_str() {
+                conf.secret = key.to_string();
+            }
+        }
+    }
+
+    if let Some(key) = &matches.value_of("assets") {
+        conf.assets = key.to_string();
+    } else if let Some(config) = &config {
+        if let Some(key) = config.get("assets") {
+            if let Some(key) = key.as_str() {
+                conf.assets = key.to_string();
             }
         }
     }

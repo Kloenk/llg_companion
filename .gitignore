@@ -2,3 +2,6 @@
 **/*.rs.bk
 config.toml
 
+node_modules
+tmp/
+dist/
