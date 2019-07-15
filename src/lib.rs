@@ -128,7 +128,7 @@ impl Config {
 
         rocket::custom(config)
             .mount("/", routes![index, files, login, login_loggedin, login_page])
-            .mount("/api/", routes![api::name, api::name_all])
+            .mount("/api/", routes![api::name, api::name_all, api::plan])
             .mount("/admin/", routes![admin])
             .register(catchers![not_found])
             .attach(DbConn::fairing())

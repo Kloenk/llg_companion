@@ -15,6 +15,7 @@ use mongodb::ThreadedClient;
 use mongodb::db::ThreadedDatabase;
 //use rocket_contrib::databases::mongodb::ThreadedClient;
 
+use super::common::Hour;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Name {
     pub name: String,
@@ -29,6 +30,7 @@ pub struct User {
     pub device: Option<String>,
     pub known_devices: Option<Vec<String>>,
     pub activ: bool,
+    pub is_admin: Option<bool>,
 }
 
 impl User {
@@ -85,6 +87,7 @@ impl Default for User {
             device: None,
             known_devices: None,
             activ: false,
+            is_admin: None,
         }
     }
 }
@@ -179,5 +182,40 @@ pub fn name_all(name: String, user: User, conn: DbConn, db: rocket::State<DataBa
     if return_value.len() != 0 {
         return Some(Json(return_value))
     }
+    None
+}
+
+#[get("/plan/<id>", rank = 2)]
+pub fn plan(id: i64, user: User, conn: DbConn) -> Option<Json<Table>> {
+    let doc = doc! {
+        "dbidx": id
+    };
+
+    println!("requesting {}", id);
+
+
+    let conn: mongodb::db::Database = conn.clone();
+    if let Ok(results) =  conn.collection("teachers").find_one(Some(doc.clone()), None) {
+        if let Some(item) = results {
+            if let Ok(item) = bson::from_bson::<Table>(bson::Bson::Document(item)) {
+                return Some(Json(item));
+            }
+        }
+    }
+    if let Ok(results) =  conn.collection("room").find_one(Some(doc.clone()), None) {
+        if let Some(item) = results {
+            if let Ok(item) = bson::from_bson::<Table>(bson::Bson::Document(item)) {
+                return Some(Json(item));
+            }
+        }
+    }
+    if let Ok(results) =  conn.collection("students").find_one(Some(doc.clone()), None) {
+        if let Some(item) = results {
+            if let Ok(item) = bson::from_bson::<Table>(bson::Bson::Document(item)) {
+                return Some(Json(item));
+            }
+        }
+    }
+
     None
 }
