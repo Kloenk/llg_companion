@@ -8,8 +8,14 @@ extern crate rocket;
 #[macro_use]
 extern crate rocket_contrib;
 
+#[macro_use(bson, doc)]
+extern crate bson;
+extern crate mongodb;
+use mongodb::db::ThreadedDatabase;
+
 use rocket::request::{self, Request, FromRequest};
 use rocket::outcome::Outcome::*;
+use rocket::response::Response;
 
 /// common data types
 pub mod common;
@@ -26,11 +32,17 @@ pub mod error;
 /// storage backend
 pub mod storage;
 
+/// api endpoints
+pub mod api;
+
 #[doc(inline)]
 pub use error::Result;
 
 /// config for rocket assets directory
 struct AssetsDir(String);
+
+/// config for database
+pub struct DataBase(String); 
 
 pub struct Config {
     /// verbose level to run
@@ -97,7 +109,7 @@ impl Config {
         // my_db = { url = "database.sqlite" }
         database_config.insert(
             "url",
-            Value::from(format!("mongodb://{}/", self.storage.url)),
+            Value::from(format!("mongodb://{}/{}", self.storage.url, self.storage.database)),
         );
         databases.insert("llg_mongo", Value::from(database_config));
 
@@ -112,14 +124,19 @@ impl Config {
         }
 
         let dir = self.assets.clone();
+        let db = self.storage.database.clone();
 
         rocket::custom(config)
-            .mount("/", routes![index, files])
+            .mount("/", routes![index, files, login, login_loggedin, login_page])
+            .mount("/api/", routes![api::name, api::name_all])
             .mount("/admin/", routes![admin])
             .register(catchers![not_found])
             .attach(DbConn::fairing())
             .attach(rocket::fairing::AdHoc::on_attach("assets Config", |rocket| {
                 Ok(rocket.manage(AssetsDir(dir)))
+            }))
+            .attach(rocket::fairing::AdHoc::on_attach("database name", |rocket| {
+                Ok(rocket.manage(DataBase(db)))
             }))
             .launch();
         Ok(())
@@ -140,9 +157,78 @@ fn index() -> &'static str {
 }
 
 
-#[get("/<file..>")]
+#[get("/<file..>", rank = 6)]
 fn files(file: std::path::PathBuf, assets_dir: rocket::State<AssetsDir>) -> Option<rocket::response::NamedFile> {
     rocket::response::NamedFile::open(std::path::Path::new(&assets_dir.0).join(file)).ok()
+}
+
+use rocket::request::FromForm;
+#[derive(FromForm)]
+struct LoginForm {
+    username: String,
+    pass: String,
+}
+
+/// function is called when the user is already logged in
+#[get("/login")]
+fn login_loggedin(user: api::User) -> rocket::response::Redirect {
+    rocket::response::Redirect::to("/")
+}
+
+#[get("/login", rank = 2)]
+fn login_page(asset_dir: rocket::State<AssetsDir>) -> std::io::Result<rocket::response::NamedFile> {
+    rocket::response::NamedFile::open(std::path::Path::new(&asset_dir.0).join("login.html"))
+}
+
+#[post("/login", data = "<login_data>")]
+fn login(login_data: rocket::request::Form<LoginForm>, mut cookie: rocket::http::Cookies, conn: DbConn) -> std::result::Result<rocket::response::Redirect, rocket::http::Status> {
+    use api::User;
+    use rocket::http::Status;
+    use bcrypt::verify;
+    // get from storage
+    let doc = doc! {
+        "name": &login_data.username
+    };
+    let conn: mongodb::db::Database = conn.clone();
+    let mut user = User::default();
+    if let Ok(result) = conn.collection("users").find_one(Some(doc.clone()), None) {
+        if let Some(result) = result {
+            let result = bson::from_bson::<User>(bson::Bson::Document(result));
+            if let Ok(result) = result {
+                user = result;
+                if !user.activ {
+                    return Err(Status::new(401, "user not activ"));
+                }
+            } else  {
+                return Err(Status::new(500, "could not parse User from db"));
+            }
+        } else {
+            return Err(Status::new(401, "user not found on db"));
+        }
+    } else {
+        return Err(Status::new(500, "could not connect db"));
+    }
+    if let Some(hash) = &user.hash {
+        if let Ok(state) = verify(&login_data.pass, hash) {
+            if !state {
+                return Err(Status::new(401, "password invalid"));
+            }
+        } else {
+            return Err(Status::new(500, "could not verify hash"));
+        }
+    } else {
+        return Err(Status::new(500, "hash field in db empty"));
+    }
+
+    cookie.add_private(rocket::http::Cookie::new("id", user.id.to_string()));
+
+    Ok(rocket::response::Redirect::to("/"))
+}
+
+#[post("/logout")]
+fn logout(mut coockies: rocket::http::Cookies) -> rocket::response::Redirect {
+    coockies.remove_private(rocket::http::Cookie::named("id"));
+    rocket::response::Redirect::to("/")
 }
 
 #[get("/")]

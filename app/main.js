@@ -208,12 +208,13 @@ function addEvent (el, type, handler) {
 
 function source (val, suggest) {
 	let value = encodeURIComponent(val);
-	fetch('names.json?name=' + value, { credentials: 'same-origin' }).then(showLogin)
+	fetch('api/names/' + value, { credentials: 'same-origin' }).then(showLogin)
 		.then(function (resp) {
 			return resp.json();
 		})
 		.then(function (data) {
-			suggest(data.names);
+			console.log(data);
+			suggest(data);
 		});
 }
 
@@ -295,9 +296,10 @@ addEventToSuggestions('mousedown', function (e) {
 
 function suggest (data) {
 	let val = search.value;
-	if (data.length && val.length > 1) {
+	console.log(data);
+	if (/*data.length && val.length > 1*/ true) {
 		let s = '';
-		for (let i = 0; i < data.length; i++) s += renderItem(data[i], val);
+		for (let i = 0; i < data.length; i++) s += renderItem(data[i].name, val);
 		id('ac-ss').innerHTML = s;
 		body.classList.add('typing');
 	} else id('ac-ss').innerHTML = '';

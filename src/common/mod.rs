@@ -1,6 +1,6 @@
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Room {
     None,
     A { room: i16 },
@@ -52,7 +52,7 @@ impl Default for Room {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Teacher {
     pub name: String,
 }
@@ -71,7 +71,7 @@ impl Default for Teacher {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Hour {
     /// room where the period takes place
     pub room: Room,
@@ -209,7 +209,7 @@ impl Default for Hour {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Course {
     None,
     Sec1 {
@@ -350,7 +350,7 @@ impl Default for Course {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum CourseKind {
     None,
     GK { number: i16 },

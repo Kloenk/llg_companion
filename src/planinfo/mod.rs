@@ -8,7 +8,7 @@ pub use super::error::Error;
 pub use super::error::Result;
 use super::storage::MongoDB;
 
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 pub use super::common::{Hour, Room, Teacher};
 
@@ -78,7 +78,7 @@ impl Config {
     fn run_get(&self, db: MongoDB) -> Result<PlanInfo> {
         let mut planinfo = PlanInfo::new();
         let mut hits = self.max_misses;
-        let mut dbidx: usize = self.start;
+        let mut dbidx: isize = self.start as isize;
 
         // build client for http
         let mut headers = header::HeaderMap::new();
@@ -110,7 +110,7 @@ impl Config {
                 hits -= 1;
             } else {
                 let body: String = body.text()?;
-                let ret = planinfo.parse_str(&body, self.verbose);
+                let ret = planinfo.parse_str(&body, self.verbose, dbidx);
                 if let Err(err) = ret {
                     eprintln!("Error: Planinfo: pars: {}", err);
                     hits -= 1;
@@ -118,7 +118,7 @@ impl Config {
                     db.planinfo_write_table(&table, &kind);
                 }
             }
-            if dbidx == self.end {
+            if dbidx == self.end as isize {
                 hits = 0;
             }
             // wait befor doing next hit
@@ -204,9 +204,10 @@ fn createTable() -> [[Hour; 12]; 5] {
     ]
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Table {
     pub name: String,
+    pub dbidx: isize,
     pub table_a: [[Hour; 12]; 5],
     pub table_b: [[Hour; 12]; 5],
     //pub date: chrono::DateTime<chrono::Utc>,
@@ -222,6 +223,7 @@ impl Default for Table {
     fn default() -> Self {
         Self {
             name: String::new(),
+            dbidx: 0,
             table_a: createTable(),
             table_b: createTable(),
             //date: chrono::Utc::now(),
@@ -252,17 +254,17 @@ impl PlanInfo {
     }
 
     /// parse string into PlanInfo
-    pub fn parse_str(&mut self, html: &str, verbose: u8) -> Result<(Table, String)> {
+    pub fn parse_str(&mut self, html: &str, verbose: u8, dbidx: isize) -> Result<(Table, String)> {
         let html = html.replace("&nbsp;", " ");
         let html = html.trim();
         let dom = parse_document(RcDom::default(), Default::default())
             .from_utf8()
             .read_from(&mut html.as_bytes())?;
-        self.parse_dom(&dom.document, verbose)
+        self.parse_dom(&dom.document, verbose, dbidx)
     }
 
     /// parse RcDom into PlanInfo
-    pub fn parse_dom(&mut self, handle: &Handle, verbose: u8) -> Result<(Table, String)> {
+    pub fn parse_dom(&mut self, handle: &Handle, verbose: u8, dbidx: isize) -> Result<(Table, String)> {
         let node: &Node = handle;
         let node: &Node = &node.children.borrow()[1];
         if node.children.borrow().len() < 2 {
@@ -291,7 +293,7 @@ impl PlanInfo {
                         if attr.name.local.to_string() == "class"
                             && attr.value.to_string() == "plan"
                         {
-                            return self.parse_dom_div(v, verbose);
+                            return self.parse_dom_div(v, verbose, dbidx);
                         }
                     }
                 }
@@ -303,7 +305,7 @@ impl PlanInfo {
     }
 
     /// parse PlanInfo plan div content
-    fn parse_dom_div(&mut self, node: &Node, verbose: u8) -> Result<(Table, String)> {
+    fn parse_dom_div(&mut self, node: &Node, verbose: u8, dbidx: isize) -> Result<(Table, String)> {
         let mut kind = 0;
         let node: &Node = node;
         for v in node.children.borrow().iter() {
@@ -537,6 +539,7 @@ impl PlanInfo {
                                                                     {
                                                                         let table: &mut Table =
                                                                             table;
+                                                                        table.dbidx = dbidx;
                                                                         if A {
                                                                             table.table_a[x][y]
                                                                                 .parse_planinfo_teacher(
@@ -556,6 +559,7 @@ impl PlanInfo {
                                                                     {
                                                                         let table: &mut Table =
                                                                             table;
+                                                                        table.dbidx = dbidx;
                                                                         if A {
                                                                             table.table_a[x][y].parse_planinfo_room(contents, &entryName, verbose);
                                                                         } else {
@@ -569,6 +573,7 @@ impl PlanInfo {
                                                                     {
                                                                         let table: &mut Table =
                                                                             table;
+                                                                        table.dbidx = dbidx;
                                                                         table.name =
                                                                             entryName.clone();
                                                                         if A {

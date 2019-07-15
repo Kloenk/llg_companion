@@ -20,6 +20,7 @@ self.addEventListener('fetch', function (evt) {
 		if (match) {
 			let path = new URL(evt.request.url).pathname;
 			if (path.startsWith('/v2/plan.json')) { evt.waitUntil(update(evt.request).then(refresh)); }
+			if (path.startsWith('/api/names')) { evt.waitUntil(update(evt.request).then(refresh)); }
 			return match;
 		} else {
 			return evt.request.method === 'GET' ? fromNetworkAndCache(evt.request) : fromNetwork(evt.request);
