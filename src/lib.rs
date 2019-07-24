@@ -13,8 +13,8 @@ extern crate bson;
 extern crate mongodb;
 use mongodb::db::ThreadedDatabase;
 
-use rocket::request::{self, Request, FromRequest};
 use rocket::outcome::Outcome::*;
+use rocket::request::{self, FromRequest, Request};
 use rocket::response::Response;
 
 /// common data types
@@ -42,7 +42,7 @@ pub use error::Result;
 struct AssetsDir(String);
 
 /// config for database
-pub struct DataBase(String); 
+pub struct DataBase(String);
 
 pub struct Config {
     /// verbose level to run
@@ -109,7 +109,10 @@ impl Config {
         // my_db = { url = "database.sqlite" }
         database_config.insert(
             "url",
-            Value::from(format!("mongodb://{}/{}", self.storage.url, self.storage.database)),
+            Value::from(format!(
+                "mongodb://{}/{}",
+                self.storage.url, self.storage.database
+            )),
         );
         databases.insert("llg_mongo", Value::from(database_config));
 
@@ -117,7 +120,8 @@ impl Config {
             .address(&self.address)
             .port(self.port)
             .extra("databases", databases)
-            .finalize().unwrap();
+            .finalize()
+            .unwrap();
 
         if !self.secret.is_empty() {
             config.set_secret_key(&self.secret).unwrap();
@@ -127,18 +131,29 @@ impl Config {
         let db = self.storage.database.clone();
 
         rocket::custom(config)
-            .mount("/", routes![index, files, login, login_loggedin, login_page])
-            .mount("/api/", routes![api::name, api::name_all, api::plan])
-            .mount("/admin/", routes![admin])
-            .register(catchers![not_found])
-            .attach(DbConn::fairing())
-            .attach(rocket::fairing::AdHoc::on_attach("assets Config", |rocket| {
-                Ok(rocket.manage(AssetsDir(dir)))
-            }))
-            .attach(rocket::fairing::AdHoc::on_attach("database name", |rocket| {
-                Ok(rocket.manage(DataBase(db)))
-            }))
-            .launch();
+            .mount(
+                "/",
+                routes![index, files, login, login_loggedin, login_page],
+            ) // mount main pathes
+            .mount("/api/", routes![api::name, api::name_all, api::plan]) // mount api path
+            .mount("/admin/", routes![admin]) // mount admin path (WIP)
+            .register(catchers![not_found]) // register catchers (404)
+            .attach(DbConn::fairing()) // attach mongodb connection
+            .attach(rocket::fairing::AdHoc::on_attach(
+                "assets Config",
+                |rocket| {
+                    // attach asset path value
+                    Ok(rocket.manage(AssetsDir(dir)))
+                },
+            ))
+            .attach(rocket::fairing::AdHoc::on_attach(
+                "database name",
+                |rocket| {
+                    // attach database name
+                    Ok(rocket.manage(DataBase(db)))
+                },
+            ))
+            .launch(); // start rocket
         Ok(())
     }
 }
@@ -156,9 +171,11 @@ fn index() -> &'static str {
     "Hello, world!"
 }
 
-
 #[get("/<file..>", rank = 6)]
-fn files(file: std::path::PathBuf, assets_dir: rocket::State<AssetsDir>) -> Option<rocket::response::NamedFile> {
+fn files(
+    file: std::path::PathBuf,
+    assets_dir: rocket::State<AssetsDir>,
+) -> Option<rocket::response::NamedFile> {
     rocket::response::NamedFile::open(std::path::Path::new(&assets_dir.0).join(file)).ok()
 }
 
@@ -181,10 +198,14 @@ fn login_page(asset_dir: rocket::State<AssetsDir>) -> std::io::Result<rocket::re
 }
 
 #[post("/login", data = "<login_data>")]
-fn login(login_data: rocket::request::Form<LoginForm>, mut cookie: rocket::http::Cookies, conn: DbConn) -> std::result::Result<rocket::response::Redirect, rocket::http::Status> {
+fn login(
+    login_data: rocket::request::Form<LoginForm>,
+    mut cookie: rocket::http::Cookies,
+    conn: DbConn,
+) -> std::result::Result<rocket::response::Redirect, rocket::http::Status> {
     use api::User;
-    use rocket::http::Status;
     use bcrypt::verify;
+    use rocket::http::Status;
     // get from storage
     let doc = doc! {
         "name": &login_data.username
@@ -199,7 +220,7 @@ fn login(login_data: rocket::request::Form<LoginForm>, mut cookie: rocket::http:
                 if !user.activ {
                     return Err(Status::new(401, "user not activ"));
                 }
-            } else  {
+            } else {
                 return Err(Status::new(500, "could not parse User from db"));
             }
         } else {
@@ -247,10 +268,11 @@ impl<'a, 'r> rocket::request::FromRequest<'a, 'r> for SuperUser {
     type Error = !;
 
     fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, !> {
-        request.cookies()
+        request
+            .cookies()
             .get_private("user_id")
             .and_then(|cookie| cookie.value().parse().ok())
-            .map(|id| Self {id})
+            .map(|id| Self { id })
             .or_forward(())
     }
 }

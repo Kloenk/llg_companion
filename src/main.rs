@@ -137,7 +137,7 @@ fn main() {
                 .long("secret")
                 .help("set secret key (256 bit base64 encoded)")
                 .takes_value(true)
-                .value_name("KEY")
+                .value_name("KEY"),
         )
         .arg(
             Arg::with_name("assets")
@@ -145,7 +145,7 @@ fn main() {
                 .short("d")
                 .help("set assets directory")
                 .takes_value(true)
-                .value_name("DIR")
+                .value_name("DIR"),
         )
         .subcommand(
             SubCommand::with_name("completion")

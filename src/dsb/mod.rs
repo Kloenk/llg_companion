@@ -9,7 +9,7 @@ use html5ever::parse_document;
 use html5ever::rcdom::{Handle, Node, NodeData, RcDom};
 use html5ever::tendril::TendrilSink;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[doc(inline)]
 pub use super::error::Result;
@@ -491,7 +491,8 @@ impl Config {
                     }
                 }
             } else if v.children.borrow().len() == 1 {
-                // header
+                // header //FIXME: add parser for class so planinfo entry also gets a class and the
+                // parsing gets faster
             }
         }
     }
@@ -694,11 +695,12 @@ impl DSB {
     }
 }
 
+/* #[derive(Debug, Serialize, Deserialize)]
 pub struct Hour {
     pub string: String,
     pub start: chrono::DateTime<Utc>,
     pub duration: chrono::Duration,
-}
+} */
 
 #[derive(Debug, Serialize)]
 pub struct Duration {

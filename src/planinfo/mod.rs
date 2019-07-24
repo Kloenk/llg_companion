@@ -8,7 +8,7 @@ pub use super::error::Error;
 pub use super::error::Result;
 use super::storage::MongoDB;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub use super::common::{Hour, Room, Teacher};
 
@@ -264,7 +264,12 @@ impl PlanInfo {
     }
 
     /// parse RcDom into PlanInfo
-    pub fn parse_dom(&mut self, handle: &Handle, verbose: u8, dbidx: isize) -> Result<(Table, String)> {
+    pub fn parse_dom(
+        &mut self,
+        handle: &Handle,
+        verbose: u8,
+        dbidx: isize,
+    ) -> Result<(Table, String)> {
         let node: &Node = handle;
         let node: &Node = &node.children.borrow()[1];
         if node.children.borrow().len() < 2 {

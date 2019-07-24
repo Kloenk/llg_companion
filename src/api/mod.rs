@@ -1,18 +1,18 @@
-use rocket::request::{self, Request, FromRequest};
-use rocket::outcome::Outcome::*;
-use rocket_contrib::json::Json;
 use rocket::data::FromData;
-use rocket::outcome::Outcome;
-use rocket::outcome::IntoOutcome;
 use rocket::http::Status;
+use rocket::outcome::IntoOutcome;
+use rocket::outcome::Outcome;
+use rocket::outcome::Outcome::*;
+use rocket::request::{self, FromRequest, Request};
+use rocket_contrib::json::Json;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use super::planinfo::Table;
-use super::{DbConn, DataBase};
+use super::{DataBase, DbConn};
 
-use mongodb::ThreadedClient;
 use mongodb::db::ThreadedDatabase;
+use mongodb::ThreadedClient;
 //use rocket_contrib::databases::mongodb::ThreadedClient;
 
 use super::common::Hour;
@@ -44,10 +44,10 @@ impl<'a, 'r> rocket::request::FromRequest<'a, 'r> for User {
 
     fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, String> {
         /* request.cookies()
-            .get_private("user_id")
-            .and_then(|cookie| cookie.value().parse().ok())
-            .map(|id| Self {id})
-            .or_forward(()) */
+        .get_private("user_id")
+        .and_then(|cookie| cookie.value().parse().ok())
+        .map(|id| Self {id})
+        .or_forward(()) */
         let id = match request.cookies().get_private("id") {
             Some(cookie) => cookie,
             None => {
@@ -60,10 +60,15 @@ impl<'a, 'r> rocket::request::FromRequest<'a, 'r> for User {
         let pool = super::DbConn::from_request(request);
         let pool = match pool {
             Success(pool) => pool,
-            _ => (return Outcome::Failure((Status::new(500, "could not connect to db"), String::from("test"))))
+            _ => {
+                (return Outcome::Failure((
+                    Status::new(500, "could not connect to db"),
+                    String::from("test"),
+                )))
+            }
         };
         let pool: mongodb::db::Database = pool.clone();
-        let doc = doc!{
+        let doc = doc! {
             "id": id
         };
         if let Ok(result) = pool.collection("users").find_one(Some(doc.clone()), None) {
@@ -72,7 +77,7 @@ impl<'a, 'r> rocket::request::FromRequest<'a, 'r> for User {
                     return Outcome::Success(result);
                 }
             }
-        }        
+        }
 
         Outcome::Forward(())
     }
@@ -93,7 +98,13 @@ impl Default for User {
 }
 
 #[get("/names/<name>/<kind>")]
-pub fn name(name: String, kind: u8, user: User, conn: DbConn, db: rocket::State<DataBase>) -> Option<Json<Vec<Name>>>  {
+pub fn name(
+    name: String,
+    kind: u8,
+    user: User,
+    conn: DbConn,
+    db: rocket::State<DataBase>,
+) -> Option<Json<Vec<Name>>> {
     /*let bson = mongodb::to_bson(&name::new(&name)).unwrap();
     let bson = bson.as_document().unwrap();
     let conn: mongodb::Client = *conn;
@@ -135,15 +146,20 @@ pub fn name(name: String, kind: u8, user: User, conn: DbConn, db: rocket::State<
             }
         }
     }
-    
+
     if return_value.len() != 0 {
-        return Some(Json(return_value))
+        return Some(Json(return_value));
     }
     None
 }
 
 #[get("/names/<name>", rank = 2)]
-pub fn name_all(name: String, user: User, conn: DbConn, db: rocket::State<DataBase>) -> Option<Json<Vec<Name>>>  {
+pub fn name_all(
+    name: String,
+    user: User,
+    conn: DbConn,
+    db: rocket::State<DataBase>,
+) -> Option<Json<Vec<Name>>> {
     let doc = doc! {
         "$text": { "$search": name, "$language": "none" }
     };
@@ -178,9 +194,9 @@ pub fn name_all(name: String, user: User, conn: DbConn, db: rocket::State<DataBa
             }
         }
     }
-    
+
     if return_value.len() != 0 {
-        return Some(Json(return_value))
+        return Some(Json(return_value));
     }
     None
 }
@@ -193,23 +209,28 @@ pub fn plan(id: i64, user: User, conn: DbConn) -> Option<Json<Table>> {
 
     println!("requesting {}", id);
 
-
     let conn: mongodb::db::Database = conn.clone();
-    if let Ok(results) =  conn.collection("teachers").find_one(Some(doc.clone()), None) {
+    if let Ok(results) = conn
+        .collection("teachers")
+        .find_one(Some(doc.clone()), None)
+    {
         if let Some(item) = results {
             if let Ok(item) = bson::from_bson::<Table>(bson::Bson::Document(item)) {
                 return Some(Json(item));
             }
         }
     }
-    if let Ok(results) =  conn.collection("room").find_one(Some(doc.clone()), None) {
+    if let Ok(results) = conn.collection("room").find_one(Some(doc.clone()), None) {
         if let Some(item) = results {
             if let Ok(item) = bson::from_bson::<Table>(bson::Bson::Document(item)) {
                 return Some(Json(item));
             }
         }
     }
-    if let Ok(results) =  conn.collection("students").find_one(Some(doc.clone()), None) {
+    if let Ok(results) = conn
+        .collection("students")
+        .find_one(Some(doc.clone()), None)
+    {
         if let Some(item) = results {
             if let Ok(item) = bson::from_bson::<Table>(bson::Bson::Document(item)) {
                 return Some(Json(item));
