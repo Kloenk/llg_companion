@@ -63,12 +63,50 @@ impl Teacher {
             name: String::new(),
         }
     }
+
+    pub fn from_str(input: &str) -> Self {
+        Self {
+            name: String::from(input),
+        }
+    }
 }
 
 impl Default for Teacher {
     fn default() -> Self {
         Self::new()
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Substitution {
+    None,
+    Substitution {
+        course: Course,
+        teacher: Teacher,
+        room: Room,
+        message: Option<String>,
+    },
+    Special {
+        message: String,
+        course: Course,
+        teacher: Teacher,
+        room: Room,
+    },
+    Changed {
+        message: Option<String>,
+        course: Course,
+        teacher: Teacher,
+        room: Room,
+    },
+    Room {
+        message: Option<String>,
+        room: Room,
+    },
+    Dropped(Option<String>),
+}
+
+impl Default for Substitution {
+    fn default() -> Self { Substitution::None }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -84,6 +122,9 @@ pub struct Hour {
 
     /// course
     pub course: Course,
+
+    /// change
+    pub substitution: Option<Substitution>,
 }
 
 impl Hour {
@@ -205,7 +246,46 @@ impl Default for Hour {
             teacher: Default::default(),
             is_tutor: false,
             course: Default::default(),
+            substitution: Default::default(),
         }
+    }
+}
+
+/// this enum holds the variable a SecII student has besid his name
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum HeaderCourse {
+    None,
+    EF (Teacher, char),
+    Q1 (Teacher),
+    Q2 (Teacher),
+}
+
+impl HeaderCourse {
+    pub fn parse_str(input: &str) -> Self {
+        let input: &str = input.trim();
+        let input: &str = input.trim_matches('(');
+        let input: &str = input.trim_matches(')');
+        let parts: Vec<&str> = input.split('-').collect();
+        if parts.len() != 2 {
+            eprintln!("Error: HeaderCurse: invalid length of parts {{{}}}", input);
+            return HeaderCourse::None;
+        }
+        if parts[0].starts_with("EF") && parts[0].len() == 3 {
+            let letter: Vec<char> = parts[0].chars().collect();
+            let letter: char = letter[2];
+            return HeaderCourse::EF(Teacher::from_str(parts[1]), letter);
+        } else if parts[0].starts_with("Q1") {
+            return HeaderCourse::Q1(Teacher::from_str(parts[1]));
+        } else if parts[0].starts_with("Q2") {
+            return HeaderCourse::Q2(Teacher::from_str(parts[1]));
+        }
+        HeaderCourse::None
+    }
+}
+
+impl Default for HeaderCourse {
+    fn default() -> Self {
+        HeaderCourse::None
     }
 }
 

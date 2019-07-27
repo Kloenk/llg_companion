@@ -10,7 +10,7 @@ use super::storage::MongoDB;
 
 use serde::{Deserialize, Serialize};
 
-pub use super::common::{Hour, Room, Teacher};
+pub use super::common::{Hour, Room, Teacher, HeaderCourse};
 
 /// config struct for planinfo
 #[derive(Clone)]
@@ -208,6 +208,7 @@ fn createTable() -> [[Hour; 12]; 5] {
 pub struct Table {
     pub name: String,
     pub dbidx: isize,
+    pub course: Option<HeaderCourse>,
     pub table_a: [[Hour; 12]; 5],
     pub table_b: [[Hour; 12]; 5],
     //pub date: chrono::DateTime<chrono::Utc>,
@@ -224,6 +225,7 @@ impl Default for Table {
         Self {
             name: String::new(),
             dbidx: 0,
+            course: None,
             table_a: createTable(),
             table_b: createTable(),
             //date: chrono::Utc::now(),
@@ -321,6 +323,7 @@ impl PlanInfo {
                     let mut A = true;
                     let mut first_run = true;
                     let mut entryName = String::new();
+                    let mut entryCourse = HeaderCourse::None;
                     let mut courseString = String::new();
                     for v in v.children.borrow().iter() {
                         let v: &Node = v;
@@ -496,10 +499,7 @@ impl PlanInfo {
                                                                                             if let Some(course) = name.last() {
                                                                                                 let course: &str = course.trim();
                                                                                                 let course: &str = course.trim_matches(')');
-                                                                                                if verbose >= 1 {
-                                                                                                    eprintln!("Error1: PlanInfo: not implemented: parse course from header: {{{}}}", course);
-                                                                                                }
-                                                                                            }
+                                                                                                entryCourse = HeaderCourse::parse_str(course);                                                                                            }
                                                                                         }
                                                                                     }
                                                                                 }
@@ -581,6 +581,7 @@ impl PlanInfo {
                                                                         table.dbidx = dbidx;
                                                                         table.name =
                                                                             entryName.clone();
+                                                                        table.course = Some(entryCourse.clone());
                                                                         if A {
                                                                             table.table_a[x][y].parse_planinfo_student(contents, &courseString, verbose);
                                                                         } else {

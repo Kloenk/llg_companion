@@ -695,13 +695,6 @@ impl DSB {
     }
 }
 
-/* #[derive(Debug, Serialize, Deserialize)]
-pub struct Hour {
-    pub string: String,
-    pub start: chrono::DateTime<Utc>,
-    pub duration: chrono::Duration,
-} */
-
 #[derive(Debug, Serialize)]
 pub struct Duration {
     pub from: i16,
@@ -714,8 +707,9 @@ impl Duration {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum EntryKind {
+    None,
     Unknow(String),
     Substitution,
     Dropped,
@@ -726,7 +720,7 @@ pub enum EntryKind {
 
 impl EntryKind {
     pub fn new() -> Self {
-        EntryKind::Unknow(String::new())
+        Default::default()
     }
     fn parse_from_str(input: &str) -> Self {
         if input.to_lowercase().contains("vertr") {
@@ -746,6 +740,10 @@ impl EntryKind {
             return EntryKind::Unknow(input.to_string());
         }
     }
+}
+
+impl Default for EntryKind {
+    fn default() -> Self { EntryKind::None }
 }
 
 #[derive(Debug, Serialize)]

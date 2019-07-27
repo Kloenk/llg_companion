@@ -212,7 +212,7 @@ pub fn plan(id: i64, user: User, conn: DbConn) -> Option<Json<Table>> {
     let conn: mongodb::db::Database = conn.clone();
     if let Ok(results) = conn
         .collection("teachers")
-        .find_one(Some(doc.clone()), None)
+        .find_one(Some(doc.clone()), Some(doc!{ "_id": 1 }))
     {
         if let Some(item) = results {
             if let Ok(item) = bson::from_bson::<Table>(bson::Bson::Document(item)) {
